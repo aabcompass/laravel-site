@@ -10,22 +10,37 @@
         </div>
         
         <!-- ЕДИНСТВЕННЫЙ БЛОК С КНОПКАМИ -->
-        <div class="space-x-3 text-sm opacity-50 hover:opacity-100 transition-opacity flex items-center">
+        <div class="space-x-3 text-sm flex items-center">
             
-            <!-- Ссылка на создание подтемы (передаем ID текущей темы как родителя) -->
-            <a href="{{ route('topics.create', ['parent_id' => $topic->id]) }}" class="text-blue-500 hover:underline">Добавить подтему</a>
+            <!-- КНОПКИ ВВЕРХ / ВНИЗ -->
+            <div class="flex items-center gap-1 mr-2 border-r border-gray-300 pr-4">
+                <form action="{{ route('topics.move', [$topic->id, 'up']) }}" method="POST" class="m-0">
+                    @csrf @method('PATCH')
+                    <button type="submit" class="w-7 h-7 flex items-center justify-center bg-gray-500 hover:bg-gray-700 text-white rounded-full transition-colors text-xs shadow-sm" title="Вверх">
+                        ▲
+                    </button>
+                </form>
+                <form action="{{ route('topics.move', [$topic->id, 'down']) }}" method="POST" class="m-0">
+                    @csrf @method('PATCH')
+                    <button type="submit" class="w-7 h-7 flex items-center justify-center bg-gray-500 hover:bg-gray-700 text-white rounded-full transition-colors text-xs shadow-sm" title="Вниз">
+                        ▼
+                    </button>
+                </form>
+            </div>
+
+            <!-- Ссылки -->
+            <a href="{{ route('topics.create', ['parent_id' => $topic->id]) }}" class="text-blue-600 hover:text-blue-800 hover:underline">Добавить подтему</a>
             
-            <!-- Ссылка на редактирование -->
-            <a href="{{ route('topics.edit', $topic->id) }}" class="text-gray-500 hover:underline">Изменить</a>
+            <a href="{{ route('topics.edit', $topic->id) }}" class="text-gray-600 hover:text-gray-800 hover:underline">Изменить</a>
             
-            <!-- Форма удаления -->
             <form action="{{ route('topics.destroy', $topic->id) }}" method="POST" class="inline m-0" onsubmit="return confirm('Удалить эту тему? Дочерние темы станут корневыми.')">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="text-red-500 hover:underline cursor-pointer">Удалить</button>
+                <button type="submit" class="text-red-500 hover:text-red-700 hover:underline cursor-pointer">Удалить</button>
             </form>
 
         </div>
+
     </div>
 
     @if ($topic->children->count() > 0)

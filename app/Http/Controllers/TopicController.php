@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TopicController extends Controller
 {
@@ -99,5 +100,45 @@ class TopicController extends Controller
         ]);
 
         return redirect()->route('topics.index')->with('success', "Новая тема '{$request->name}' успешно создана!");
+    }
+
+    public function move(Topic $topic, $direction)
+    {
+        // Защита от неверных параметров
+        if (!in_array($direction, ['up', 'down'])) {
+            abort(400);
+        }
+
+        $operator = $direction === 'up' ? '<' : '>';
+        $order = $direction === 'up' ? 'desc' : 'asc';
+
+        // Ищем "соседа", с которым нужно поменяться местами
+        $query = Topic::query();
+        
+        // Учитываем, что parent_id может быть 0 или null
+        if (empty($topic->parent_id)) {
+            $query->where(function($q) {
+                $q->whereNull('parent_id')->orWhere('parent_id', 0);
+            });
+        } else {
+            $query->where('parent_id', $topic->parent_id);
+        }
+
+        // Берем ближайшего соседа в нужном направлении
+        $adjacentTopic = $query->where('sorting_num', $operator, $topic->sorting_num)
+                               ->orderBy('sorting_num', $order)
+                               ->first();
+
+        // Если сосед найден - меняем их sorting_num местами в транзакции
+        if ($adjacentTopic) {
+            DB::transaction(function () use ($topic, $adjacentTopic) {
+                $tempSort = $topic->sorting_num;
+                $topic->update(['sorting_num' => $adjacentTopic->sorting_num]);
+                $adjacentTopic->update(['sorting_num' => $tempSort]);
+            });
+        }
+
+        // Возвращаемся обратно на страницу (без лишних уведомлений)
+        return back();
     }
 }
