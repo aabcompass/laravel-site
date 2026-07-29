@@ -58,4 +58,15 @@ class Task extends Model
         return $this->hasMany(Attachment::class, 'attachable_id')
                     ->where('attachable_type', 'author_solution');
     }
+
+    // --- СВЯЗЬ ДЛЯ БЕЙДЖИКА "ИСПОЛЬЗУЕТСЯ В РАБОТАХ" ---
+    public function variants()
+    {
+        return $this->belongsToMany(
+            WorkVariant::class, 
+            'Work_Variant_Tasks', // Имя промежуточной таблицы
+            'task_id',            // Внешний ключ текущей модели
+            'work_variant_id'     // Внешний ключ связываемой модели
+        );
+    }
 }

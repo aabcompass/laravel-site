@@ -13,11 +13,51 @@ use Illuminate\Support\Facades\File;
 class TaskController extends Controller
 {
     // --- ВЫВОД СПИСКА ---
-    public function index()
+    public function index(Request $request)
     {
-        // Подгружаем связи, чтобы не делать лишних запросов к БД
-        $tasks = Task::with(['topic', 'source', 'author'])->orderByDesc('id')->paginate(50);
-        return view('tasks.index', compact('tasks'));
+        // 1. Получаем параметры из URL (с дефолтными значениями)
+        $perPage = $request->input('per_page', 100);
+        $sortField = $request->input('sort_by', 'id');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        // 2. Начинаем строить запрос
+        $query = Task::query()
+            // Подгружаем жадно (Eager Loading) всё, что понадобится для отрисовки карточек и popup'ов
+            ->with(['topic', 'source', 'author', 'taskImages'])
+            // Магия Laravel: автоматически добавит свойство $task->variants_count
+            ->withCount('variants');
+
+        // 3. ФИЛЬТРЫ (when выполняет код, только если значение передано и не пустое)
+        $query->when($request->topic_id, fn($q, $v) => $q->where('topic_id', $v));
+        $query->when($request->source_id, fn($q, $v) => $q->where('source_id', $v));
+        $query->when($request->author_id, fn($q, $v) => $q->where('author_id', $v));
+
+        // 4. ПОИСК (Если ввели число - ищем по ID, если текст - ищем по содержимому)
+        $query->when($request->search, function($q, $v) {
+            if (is_numeric($v)) {
+                $q->where('id', $v);
+            } else {
+                $q->where('task_text', 'like', "%{$v}%");
+            }
+        });
+
+        // 5. СОРТИРОВКА (Защита "от дурака" - проверяем, что поля разрешены)
+        $allowedSorts = ['id', 'complexity'];
+        $sortField = in_array($sortField, $allowedSorts) ? $sortField : 'id';
+        $sortDir = in_array($sortDir, ['asc', 'desc']) ? $sortDir : 'desc';
+        
+        $query->orderBy($sortField, $sortDir);
+
+        // 6. ВЫПОЛНЯЕМ ЗАПРОС И ПАГИНИРУЕМ
+        // withQueryString() - это та самая магия, которая сохраняет все текущие фильтры в URL при переходе по страницам пагинации!
+        $tasks = $query->paginate($perPage)->withQueryString();
+
+        // 7. ДАННЫЕ ДЛЯ ВЫПАДАЮЩИХ СПИСКОВ В ФИЛЬТРЕ
+        $topics = Topic::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
+        $sources = Source::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
+        $users = User::orderBy('last_name')->get();
+
+        return view('tasks.index', compact('tasks', 'topics', 'sources', 'users', 'perPage', 'sortField', 'sortDir'));
     }
 
     // --- ФОРМА СОЗДАНИЯ ---
@@ -71,10 +111,14 @@ class TaskController extends Controller
         return back()->with('success', 'Изменения сохранены.');
     }
 
-    // --- УДАЛЕНИЕ ЗАДАЧИ ---
     public function destroy(Task $task)
     {
-        // Перед удалением задачи удалим физически все её картинки
+        // ПРОВЕРКА: Если задача привязана хотя бы к одному варианту - блокируем удаление
+        if ($task->variants()->exists()) {
+            return back()->with('error', 'Нельзя удалить задачу: она уже используется в вариантах работ.');
+        }
+
+        // Физическое удаление картинок
         $attachments = Attachment::where('attachable_id', $task->id)
             ->whereIn('attachable_type', ['task', 'author_solution'])->get();
         
@@ -83,7 +127,7 @@ class TaskController extends Controller
         }
 
         $task->delete();
-        return redirect()->route('tasks.index')->with('success', 'Задача удалена.');
+        return redirect()->route('tasks.index')->with('success', 'Задача успешно удалена.');
     }
 
     // --- УДАЛЕНИЕ ОТДЕЛЬНОЙ КАРТИНКИ (AJAX или форма) ---
