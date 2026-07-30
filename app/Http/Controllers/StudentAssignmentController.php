@@ -219,4 +219,56 @@ class StudentAssignmentController extends Controller
             'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort'
         ));
     }
+
+    /**
+     * Страница "Мой прогресс" (Сводка по темам)
+     */
+    public function progress()
+    {
+        $studentId = auth()->id();
+
+        // 1. Получаем дерево тем для красивого вывода
+        $topicsTree = \App\Models\Topic::whereNull('parent_id')
+                        ->orWhere('parent_id', 0)
+                        ->with('children')
+                        ->orderBy('sorting_num')
+                        ->get();
+
+        // 2. Считаем, сколько вообще задач есть в базе по каждой теме (Группировка)
+        $totalTasksDb = \App\Models\Task::selectRaw('topic_id, count(*) as count')
+                        ->groupBy('topic_id')
+                        ->pluck('count', 'topic_id');
+
+        // 3. Получаем ВСЕ назначения ученика одним запросом (JOIN с задачами, чтобы знать сложность)
+        $assignments = StudentAssignment::where('student_id', $studentId)
+            ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
+            ->select('Student_Assignments.*', 'Tasks.topic_id', 'Tasks.complexity')
+            ->get();
+
+        // 4. Формируем массив статистики для каждой темы
+        $stats = [];
+        $allTopics = \App\Models\Topic::all(); // Плоский список всех тем
+        
+        foreach ($allTopics as $topic) {
+            // Отбираем задания только для текущей темы
+            $topicAssigns = $assignments->where('topic_id', $topic->id);
+            
+            // Разделяем на решенные и нерешенные
+            $solved = $topicAssigns->where('status', 'accepted');
+            $unsolved = $topicAssigns->where('status', '!=', 'accepted');
+
+            $stats[$topic->id] = [
+                'total_db' => $totalTasksDb[$topic->id] ?? 0,
+                'assigned' => $topicAssigns->count(),
+                'solved' => $solved->count(),
+                'submitted' => $topicAssigns->where('status', 'submitted')->count(),
+                // Считаем средние значения (если задач нет, будет null)
+                'avg_score' => $solved->avg('mark_percent'),
+                'avg_comp_solved' => $solved->avg('complexity'),
+                'avg_comp_unsolved' => $unsolved->avg('complexity'),
+            ];
+        }
+
+        return view('assignments.progress', compact('topicsTree', 'stats'));
+    }
 }

@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
 
         // === ЗОНА СТУДЕНТОВ (Мои задания) ===
     Route::get('/dashboard', [StudentAssignmentController::class, 'index'])->name('dashboard');
+    Route::get('/progress', [StudentAssignmentController::class, 'progress'])->name('assignments.progress');
     Route::get('/assignments/{assignment}', [StudentAssignmentController::class, 'show'])->name('assignments.show');
     Route::post('/assignments/{assignment}/submit', [StudentAssignmentController::class, 'submit'])->name('assignments.submit');
     Route::post('/assignments/{assignment}/recall', [StudentAssignmentController::class, 'recall'])->name('assignments.recall');
