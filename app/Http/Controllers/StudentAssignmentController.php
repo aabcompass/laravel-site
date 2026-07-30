@@ -6,6 +6,8 @@ use App\Models\StudentAssignment;
 use App\Models\Attachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class StudentAssignmentController extends Controller
 {
@@ -47,7 +49,7 @@ class StudentAssignmentController extends Controller
         $request->validate([
             'solution_text' => 'nullable|string',
             'answer_numeric' => 'nullable|numeric',
-            'solution_files.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:10240', // до 10 МБ
+            'solution_files.*' => 'nullable|file|mimes:jpeg,png,webm,jpg,gif,pdf|max:10240', // до 10 МБ
         ]);
 
         // 3. ОБНОВЛЕНИЕ ДАННЫХ
@@ -118,6 +120,7 @@ class StudentAssignmentController extends Controller
         return back()->with('success', 'Файл удален.');
     }
 
+
     /**
      * Отзыв отправленной работы (если учитель еще не проверил)
      */
@@ -136,5 +139,84 @@ class StudentAssignmentController extends Controller
         ]);
 
         return back()->with('success', 'Работа отозвана для доработки.');
+    }
+
+    public function index(Request $request)
+    {
+        $studentId = auth()->id();
+
+        // 1. СТАТИСТИКА ДЛЯ КЛИКАБЕЛЬНЫХ КНОПОК
+        // Считаем количество задач по статусам
+        $statusCounts = StudentAssignment::where('student_id', $studentId)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+            
+        $totalCount = array_sum($statusCounts);
+
+        // 2. ПОЛУЧАЕМ ТЕМЫ ДЛЯ ВЫПАДАЮЩЕГО СПИСКА
+        // Берем только те темы, задачи из которых назначены этому студенту
+        $topicIds = StudentAssignment::where('student_id', $studentId)
+            ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
+            ->distinct()
+            ->pluck('Tasks.topic_id');
+            
+        $topics = \App\Models\Topic::whereIn('id', $topicIds)->orderBy('name')->get();
+
+        // 3. СТРОИМ ОСНОВНОЙ ЗАПРОС
+        // Используем JOIN с Tasks, чтобы мы могли делать сортировку по сложности задачи (complexity)
+        $query = StudentAssignment::query()
+            ->where('student_id', $studentId)
+            ->select('Student_Assignments.*') // Выбираем поля только из назначений
+            ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
+            ->with(['task.topic', 'task.taskImages']); // Жадная загрузка
+
+        // --- ФИЛЬТРЫ ---
+        $query->when($request->status, fn($q, $v) => $q->where('status', $v));
+        $query->when($request->topic_id, fn($q, $v) => $q->where('Tasks.topic_id', $v));
+
+        // --- СОРТИРОВКА ---
+        $sort = $request->input('sort', 'date_desc');
+        switch ($sort) {
+            case 'complexity_asc':
+                $query->orderBy('Tasks.complexity', 'asc');
+                break;
+            case 'complexity_desc':
+                $query->orderBy('Tasks.complexity', 'desc');
+                break;
+            case 'date_asc':
+                $query->orderBy('Student_Assignments.assigned_at', 'asc');
+                break;
+            case 'date_desc':
+            default:
+                // Сначала задачи, требующие доработки, затем по дате назначения
+                $query->orderByRaw("CASE WHEN status = 'revision_needed' THEN 0 ELSE 1 END")
+                      ->orderBy('Student_Assignments.assigned_at', 'desc');
+                break;
+        }
+
+        // --- ПАГИНАЦИЯ ---
+        $assignments = $query->paginate(15)->withQueryString();
+
+        // 4. ДАННЫЕ ДЛЯ ГРАФИКА СЛОЖНОСТИ (Только для 'accepted')
+        $complexityStats = [];
+        $acceptedTasks = StudentAssignment::where('student_id', $studentId)
+            ->where('status', 'accepted')
+            ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
+            ->selectRaw('Tasks.complexity, count(*) as count')
+            ->groupBy('Tasks.complexity')
+            ->orderBy('Tasks.complexity')
+            ->get();
+
+        foreach ($acceptedTasks as $stat) {
+            $complexityStats['labels'][] = 'Сложность ' . $stat->complexity;
+            $complexityStats['data'][] = $stat->count;
+        }
+
+        // Возвращаем в шаблон
+        return view('assignments.index', compact(
+            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort'
+        ));
     }
 }

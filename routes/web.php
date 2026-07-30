@@ -11,9 +11,30 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+//Route::get('/dashboard', function () {
+//    return view('dashboard');
+//})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/my_assignments.php', function (\Illuminate\Http\Request $request) {
+    $token = $request->query('token');
+    
+    if (!$token) {
+        abort(401, 'Токен доступа не передан.');
+    }
+
+    // Ищем пользователя с таким токеном в базе
+    $user = \App\Models\User::where('auth_token', $token)->first();
+
+    if (!$user) {
+        abort(403, 'Пользователь с таким токеном не найден.');
+    }
+
+    // Авторизуем пользователя в Laravel без пароля
+    auth()->login($user);
+
+    // Перенаправляем на новую главную страницу студента
+    return redirect()->route('dashboard')->with('success', 'Вы успешно вошли по токену доступа!');
+});
 
 // === ОБЩАЯ ЗОНА (Только для авторизованных) ===
 Route::middleware('auth')->group(function () {
@@ -22,11 +43,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
         // === ЗОНА СТУДЕНТОВ (Мои задания) ===
+    Route::get('/dashboard', [StudentAssignmentController::class, 'index'])->name('dashboard');
     Route::get('/assignments/{assignment}', [StudentAssignmentController::class, 'show'])->name('assignments.show');
     Route::post('/assignments/{assignment}/submit', [StudentAssignmentController::class, 'submit'])->name('assignments.submit');
     Route::post('/assignments/{assignment}/recall', [StudentAssignmentController::class, 'recall'])->name('assignments.recall');
     Route::delete('/assignments/{assignment}/attachments/{attachment}', [StudentAssignmentController::class, 'destroyAttachment'])->name('assignments.attachments.destroy');
-
+ 
+    
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
         // Темы
@@ -46,6 +69,18 @@ Route::middleware('auth')->group(function () {
         Route::put('/sources/{source}', [SourceController::class, 'update'])->name('sources.update');
         Route::patch('/sources/{source}/move/{direction}', [SourceController::class, 'move'])->name('sources.move');
         Route::delete('/sources/{source}', [SourceController::class, 'destroy'])->name('sources.destroy');
+        Route::get('/login-as/{user}', function (\App\Models\User $user) {
+        // Защита: только админы или авторы могут использовать эту фичу
+            if (!auth()->user()->hasAnyRole(['admin', 'author', 'teacher'])) {
+            abort(403, 'Только учителя могут входить под чужим аккаунтом.');
+            }
+
+            // Авторизуем найденного пользователя (без пароля!)
+            auth()->login($user);
+
+            // Перекидываем на главную страницу студента
+            return redirect('/dashboard')->with('success', "Вы вошли как {$user->first_name} {$user->last_name}");
+        });
     });
 
     // === ЗОНА АВТОРОВ (Для 'admin' и 'author') ===
