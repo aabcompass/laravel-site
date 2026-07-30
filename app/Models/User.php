@@ -40,4 +40,33 @@ class User extends Authenticatable
     {
         return $this->last_name . ' ' . $this->first_name;
     }
+
+    // --- СВЯЗИ ---
+
+    // Пользователь имеет много ролей через промежуточную таблицу User_Roles
+    public function roles()
+    {
+        return $this->belongsToMany(
+            Role::class, 
+            'User_Roles', // Имя промежуточной таблицы
+            'user_id',    // Ключ текущей модели в этой таблице
+            'role_id'     // Ключ связанной модели в этой таблице
+        );
+    }
+
+    // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ---
+
+    // Метод для быстрой проверки, есть ли у пользователя нужная роль
+    public function hasRole($roleName)
+    {
+        // Перебираем все роли пользователя и проверяем совпадение по имени
+        return $this->roles->contains('name', $roleName);
+    }
+
+    // Метод для проверки наличия хотя бы одной роли из списка
+    public function hasAnyRole(array $roleNames)
+    {
+        // Метод intersect проверяет, есть ли пересечение двух массивов (коллекций)
+        return $this->roles->pluck('name')->intersect($roleNames)->isNotEmpty();
+    }
 }
