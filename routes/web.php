@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TaskController;
-use App\Http\Controllers\StudentAssignmentController; 
+use App\Http\Controllers\StudentAssignmentController;
+use App\Http\Controllers\GroupController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -53,6 +55,14 @@ Route::middleware('auth')->group(function () {
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
+
+        // Группы
+        Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+        Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
+        Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+        Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
+        Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+        Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
         // Темы
         Route::get('/topics', [TopicController::class, 'index'])->name('topics.index');
         Route::get('/topics/create', [TopicController::class, 'create'])->name('topics.create');

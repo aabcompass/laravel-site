@@ -69,4 +69,10 @@ class User extends Authenticatable
         // Метод intersect проверяет, есть ли пересечение двух массивов (коллекций)
         return $this->roles->pluck('name')->intersect($roleNames)->isNotEmpty();
     }
+
+    // Связь: Ученик принадлежит группе
+    public function group()
+    {
+        return $this->belongsTo(Group::class, 'group_id');
+    }
 }
