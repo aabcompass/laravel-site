@@ -8,6 +8,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\StudentAssignmentController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkController;
 
 
 Route::get('/', function () {
@@ -114,6 +115,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
         Route::delete('/attachments/{attachment}', [TaskController::class, 'destroyAttachment'])->name('attachments.destroy');
         Route::post('/tasks/{task}/copy', [TaskController::class, 'copy'])->name('tasks.copy');
+        Route::resource('works', WorkController::class)->except(['show']);
     });
 });
 

@@ -27,9 +27,8 @@
 
                     <!-- ДЛЯ УЧИТЕЛЕЙ, АВТОРОВ И АДМИНОВ: Задачи -->
                     @can('use-tasks')
-                        <x-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">
-                            База задач
-                        </x-nav-link>
+                        <x-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">База задач</x-nav-link>
+                        <x-nav-link :href="route('works.index')" :active="request()->routeIs('works.*')">Работы и варианты</x-nav-link>
                     @endcan
 
                     <!-- ДЛЯ АДМИНОВ: Справочники и Настройки -->
@@ -121,9 +120,8 @@
             @endif
 
             @can('use-tasks')
-                <x-responsive-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">
-                    База задач
-                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">База задач</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('works.index')" :active="request()->routeIs('works.*')">Работы и варианты</x-responsive-nav-link>
             @endcan
 
             @can('manage-references')
