@@ -7,6 +7,7 @@ use App\Http\Controllers\SourceController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\StudentAssignmentController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\UserController;
 
 
 Route::get('/', function () {
@@ -56,7 +57,15 @@ Route::middleware('auth')->group(function () {
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
 
+        // Пользователи
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         // Группы
+         Route::patch('/users/{user}/group', [UserController::class, 'updateGroup'])->name('users.updateGroup');
         Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
         Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
         Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');

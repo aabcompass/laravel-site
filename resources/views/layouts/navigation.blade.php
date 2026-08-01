@@ -52,6 +52,7 @@
                                     <x-dropdown-link :href="route('topics.index')">Темы</x-dropdown-link>
                                     <x-dropdown-link :href="route('sources.index')">Источники</x-dropdown-link>
                                     <x-dropdown-link :href="route('groups.index')">Учебные группы</x-dropdown-link>
+                                    <x-dropdown-link :href="route('users.index')">Пользователи</x-dropdown-link>
                                 </x-slot>
                             </x-dropdown>
                         </div>
@@ -131,7 +132,8 @@
                 <x-responsive-nav-link :href="route('topics.index')" :active="request()->routeIs('topics.*')">Темы</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('sources.index')" :active="request()->routeIs('sources.*')">Источники</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('groups.index')" :active="request()->routeIs('groups.*')">Учебные группы</x-responsive-nav-link>
-            @endcan
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Пользователи</x-responsive-nav-link>
+                @endcan
         </div>
 
         <!-- Responsive Settings Options -->

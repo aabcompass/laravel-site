@@ -20,6 +20,7 @@ class User extends Authenticatable
         'password_hash',
         'last_name',
         'first_name',
+        'group_id',
     ];
 
     // 3. Прячем приватные данные (чтобы они случайно не вывелись на экран)
