@@ -123,6 +123,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/variants/{variant}/clone', [WorkVariantController::class, 'clone'])->name('variants.clone');
         Route::patch('/variants/{variant}/archive', [WorkVariantController::class, 'toggleArchive'])->name('variants.archive');
         Route::patch('/variants/{variant}/name', [WorkVariantController::class, 'updateName'])->name('variants.updateName');
+        // Наполнение варианта (Уровень 2)
+        Route::get('/variants/{variant}/build', [WorkVariantController::class, 'build'])->name('variants.build');
+        Route::post('/variants/{variant}/attach', [WorkVariantController::class, 'attachTasks'])->name('variants.attach');
+        Route::delete('/variants/{variant}/detach/{task}', [WorkVariantController::class, 'detachTask'])->name('variants.detach');
+        Route::put('/variants/{variant}/reorder', [WorkVariantController::class, 'reorderTasks'])->name('variants.reorder');
     });
 });
 

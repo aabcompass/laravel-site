@@ -106,7 +106,7 @@
                                         <div x-show="open" x-cloak class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-xl bg-white border z-50 text-left overflow-hidden">
                                             
                                             <!-- Наполнение варианта -->
-                                            <a href="#" class="block px-4 py-2 text-sm text-blue-600 font-bold hover:bg-blue-50">⚙ Наполнить задачами</a>
+                                            <a href="{{ route('variants.build', $variant->id) }}" class="block px-4 py-2 text-sm text-blue-600 font-bold hover:bg-blue-50">⚙ Наполнить задачами</a>
                                             
                                             <!-- Переименование (Только автор или админ) -->
                                             @if($isAuthorOrAdmin)

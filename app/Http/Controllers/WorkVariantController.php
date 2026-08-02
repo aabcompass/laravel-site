@@ -99,4 +99,113 @@ class WorkVariantController extends Controller
 
         return back()->with('success', 'Название варианта обновлено.');
     }
+
+    // =========================================================================
+    // УРОВЕНЬ 2: НАПОЛНЕНИЕ ВАРИАНТА ЗАДАЧАМИ
+    // =========================================================================
+
+    /**
+     * Отображение страницы конструктора (Две колонки)
+     */
+    public function build(Request $request, WorkVariant $variant)
+    {
+        // 1. Получаем задачи, уже добавленные в этот вариант
+        // Используем связь tasks() из модели, которая сразу сортирует по pivot_sorting_num
+        $variantTasks = $variant->tasks()->with('topic')->get();
+        // Массив ID уже добавленных задач (чтобы исключить их из поиска слева)
+        $attachedTaskIds = $variantTasks->pluck('id')->toArray();
+
+        // 2. Получаем задачи из Базы (Левая колонка)
+        $query = \App\Models\Task::with(['topic', 'author']);
+
+        // Не показываем задачи, которые УЖЕ добавлены в правую колонку
+        if (!empty($attachedTaskIds)) {
+            $query->whereNotIn('id', $attachedTaskIds);
+        }
+
+        // Фильтры базы задач
+        $query->when($request->topic_id, fn($q, $v) => $q->where('topic_id', $v));
+        $query->when($request->source_id, fn($q, $v) => $q->where('source_id', $v));
+        $query->when($request->search, function($q, $v) {
+            if (is_numeric($v)) {
+                $q->where('id', $v);
+            } else {
+                $q->where('task_text', 'like', "%{$v}%");
+            }
+        });
+
+        // Сортировка базы задач
+        $sortField = in_array($request->sort_by, ['id', 'complexity']) ? $request->sort_by : 'id';
+        $query->orderBy($sortField, $request->input('sort_dir', 'desc'));
+
+        $libraryTasks = $query->paginate(50)->withQueryString();
+
+        // Данные для выпадающих списков фильтров
+        $topics = \App\Models\Topic::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
+        $sources = \App\Models\Source::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
+
+        return view('variants.build', compact('variant', 'variantTasks', 'libraryTasks', 'topics', 'sources', 'sortField'));
+    }
+
+    /**
+     * Массовое добавление задач в вариант
+     */
+    public function attachTasks(Request $request, WorkVariant $variant)
+    {
+        if ($variant->isAssigned()) abort(403, 'Вариант уже выдан, изменение запрещено.');
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $request->validate(['task_ids' => 'required|array']);
+
+        // Находим максимальный sorting_num в текущем варианте
+        $maxSort = DB::table('Work_Variant_Tasks')
+                     ->where('work_variant_id', $variant->id)
+                     ->max('sorting_num') ?? -1;
+
+        $attachData = [];
+        foreach ($request->task_ids as $taskId) {
+            $maxSort++;
+            $attachData[$taskId] = ['sorting_num' => $maxSort];
+        }
+
+        // Прикрепляем задачи без открепления старых (syncWithoutDetaching)
+        $variant->tasks()->syncWithoutDetaching($attachData);
+
+        return back()->with('success', 'Задачи добавлены в вариант.');
+    }
+
+    /**
+     * Удаление одной задачи из варианта
+     */
+    public function detachTask(WorkVariant $variant, \App\Models\Task $task)
+    {
+        if ($variant->isAssigned()) abort(403);
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $variant->tasks()->detach($task->id);
+
+        return back()->with('success', 'Задача убрана из варианта.');
+    }
+
+    /**
+     * Сохранение нового порядка задач (Drag & Drop)
+     */
+    public function reorderTasks(Request $request, WorkVariant $variant)
+    {
+        if ($variant->isAssigned()) abort(403);
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $request->validate(['task_order' => 'required|array']);
+
+        DB::transaction(function () use ($request, $variant) {
+            foreach ($request->task_order as $index => $taskId) {
+                DB::table('Work_Variant_Tasks')
+                    ->where('work_variant_id', $variant->id)
+                    ->where('task_id', $taskId)
+                    ->update(['sorting_num' => $index]);
+            }
+        });
+
+        return back()->with('success', 'Порядок задач сохранен.');
+    }
 }
