@@ -126,6 +126,7 @@ class WorkVariantController extends Controller
         // Фильтры базы задач
         $query->when($request->topic_id, fn($q, $v) => $q->where('topic_id', $v));
         $query->when($request->source_id, fn($q, $v) => $q->where('source_id', $v));
+        $query->when($request->author_id, fn($q, $v) => $q->where('author_id', $v));
         $query->when($request->search, function($q, $v) {
             if (is_numeric($v)) {
                 $q->where('id', $v);
@@ -144,7 +145,9 @@ class WorkVariantController extends Controller
         $topics = \App\Models\Topic::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
         $sources = \App\Models\Source::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
 
-        return view('variants.build', compact('variant', 'variantTasks', 'libraryTasks', 'topics', 'sources', 'sortField'));
+        $authors = \App\Models\User::whereHas('tasks')->orderBy('last_name')->get();
+
+        return view('variants.build', compact('variant', 'variantTasks', 'libraryTasks', 'topics', 'sources', 'authors', 'sortField'));
     }
 
     /**

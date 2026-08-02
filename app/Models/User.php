@@ -76,4 +76,10 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Group::class, 'group_id');
     }
+
+     public function tasks()
+    {
+        // Указываем внешний ключ author_id, так как по умолчанию Laravel искал бы user_id
+        return $this->hasMany(Task::class, 'author_id');
+    }
 }
