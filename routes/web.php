@@ -9,6 +9,7 @@ use App\Http\Controllers\StudentAssignmentController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkController;
+use App\Http\Controllers\WorkVariantController;
 
 
 Route::get('/', function () {
@@ -66,7 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         // Группы
-         Route::patch('/users/{user}/group', [UserController::class, 'updateGroup'])->name('users.updateGroup');
+        Route::patch('/users/{user}/group', [UserController::class, 'updateGroup'])->name('users.updateGroup');
         Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
         Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
         Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
@@ -116,6 +117,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{attachment}', [TaskController::class, 'destroyAttachment'])->name('attachments.destroy');
         Route::post('/tasks/{task}/copy', [TaskController::class, 'copy'])->name('tasks.copy');
         Route::resource('works', WorkController::class)->except(['show']);
+        // Варианты работ (Уровень 1)
+        Route::get('/works/{work}/variants', [WorkVariantController::class, 'index'])->name('works.variants.index');
+        Route::post('/works/{work}/variants', [WorkVariantController::class, 'store'])->name('works.variants.store');
+        Route::post('/variants/{variant}/clone', [WorkVariantController::class, 'clone'])->name('variants.clone');
+        Route::patch('/variants/{variant}/archive', [WorkVariantController::class, 'toggleArchive'])->name('variants.archive');
+        Route::patch('/variants/{variant}/name', [WorkVariantController::class, 'updateName'])->name('variants.updateName');
     });
 });
 

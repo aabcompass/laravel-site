@@ -89,7 +89,7 @@
                                 
                                 <td class="px-6 py-4 text-right space-x-3">
                                     <!-- Кнопка перехода к вариантам (будущий контроллер) -->
-                                    <a href="#" class="text-indigo-600 font-bold hover:underline">Конструктор &rarr;</a>
+                                    <a href="{{ route('works.variants.index', $work->id) }}" class="text-indigo-600 font-bold hover:underline">Конструктор &rarr;</a>
                                     
                                     @if($canEdit)
                                         <a href="{{ route('works.edit', $work->id) }}" class="text-gray-500 hover:text-gray-800 hover:underline">Изменить</a>
