@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/variants/{variant}/attach', [WorkVariantController::class, 'attachTasks'])->name('variants.attach');
         Route::delete('/variants/{variant}/detach/{task}', [WorkVariantController::class, 'detachTask'])->name('variants.detach');
         Route::put('/variants/{variant}/reorder', [WorkVariantController::class, 'reorderTasks'])->name('variants.reorder');
+        Route::put('/variants/{variant}/sort-complexity', [WorkVariantController::class, 'sortByComplexity'])->name('variants.sortComplexity');
     });
 });
 

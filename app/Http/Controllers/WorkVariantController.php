@@ -180,12 +180,17 @@ class WorkVariantController extends Controller
     /**
      * Удаление одной задачи из варианта
      */
-    public function detachTask(WorkVariant $variant, \App\Models\Task $task)
+    public function detachTask(Request $request, WorkVariant $variant, \App\Models\Task $task)
     {
         if ($variant->isAssigned()) abort(403);
         if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
 
         $variant->tasks()->detach($task->id);
+
+        // Если запрос пришел из Javascript (AJAX), просто возвращаем "ОК"
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()->with('success', 'Задача убрана из варианта.');
     }
@@ -210,5 +215,28 @@ class WorkVariantController extends Controller
         });
 
         return back()->with('success', 'Порядок задач сохранен.');
+    }
+
+    /**
+     * Автоматическая сортировка задач в варианте по сложности
+     */
+    public function sortByComplexity(WorkVariant $variant)
+    {
+        if ($variant->isAssigned()) abort(403);
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        // Получаем задачи и сортируем по сложности
+        $tasks = $variant->tasks()->orderBy('complexity', 'asc')->get();
+        
+        DB::transaction(function () use ($variant, $tasks) {
+            foreach ($tasks as $index => $task) {
+                DB::table('Work_Variant_Tasks')
+                    ->where('work_variant_id', $variant->id)
+                    ->where('task_id', $task->id)
+                    ->update(['sorting_num' => $index]);
+            }
+        });
+
+        return back()->with('success', 'Задачи в варианте отсортированы по возрастанию сложности.');
     }
 }

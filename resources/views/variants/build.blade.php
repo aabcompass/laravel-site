@@ -48,10 +48,10 @@
             @endif
 
             <!-- ИЗМЕНЕНИЕ 1: md:flex-row заставит колонки стоять рядом почти всегда -->
-            <div class="flex flex-col md:flex-row gap-6 h-[calc(100vh-180px)]">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-180px)]">
 
                 <!-- ЛЕВАЯ КОЛОНКА: БАЗА ЗАДАЧ -->
-                <div class="w-full md:w-3/5 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden" x-data="{ selectedTasks: [] }">
+                <div class="lg:col-span-7 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden" x-data="{ selectedTasks: [] }">
                     
                     <div class="bg-gray-50 border-b p-4">
                         <h3 class="font-bold text-gray-800 mb-3">База задач</h3>
@@ -141,23 +141,35 @@
                 </div>
 
                 <!-- ПРАВАЯ КОЛОНКА: ЗАДАЧИ ВАРИАНТА -->
-                <div class="w-full md:w-2/5 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden">
+                <div class="lg:col-span-5 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden" x-data="{ taskCount: {{ $variantTasks->count() }} }">
                     
-                    <div class="bg-indigo-50 border-b p-4 flex justify-between items-center">
+                    <div class="bg-indigo-50 border-b p-4 flex justify-between items-center flex-wrap gap-2">
                         <div>
                             <h3 class="font-bold text-indigo-900">Задачи в варианте</h3>
-                            <div class="text-xs text-indigo-700 mt-1">Всего задач: {{ $variantTasks->count() }}</div>
+                            <div class="text-xs text-indigo-700 mt-1">Всего задач: <span x-text="taskCount"></span></div>
                         </div>
                         
-                        @if(!$isReadOnly)
-                            <form id="reorder-form" action="{{ route('variants.reorder', $variant->id) }}" method="POST" class="hidden m-0">
-                                @csrf @method('PUT')
-                                <div id="reorder-inputs"></div>
-                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow animate-pulse">
-                                    Сохранить порядок
-                                </button>
-                            </form>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            <!-- Кнопка сортировки по сложности -->
+                            @if(!$isReadOnly && $variantTasks->count() > 1)
+                                <form action="{{ route('variants.sortComplexity', $variant->id) }}" method="POST" class="m-0" onsubmit="return confirm('Отсортировать задачи от легких к сложным? Текущий порядок будет изменен.')">
+                                    @csrf @method('PUT')
+                                    <button type="submit" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold py-1.5 px-3 rounded shadow-sm transition">
+                                        Сорт. по сложности
+                                    </button>
+                                </form>
+                            @endif
+
+                            @if(!$isReadOnly)
+                                <form id="reorder-form" action="{{ route('variants.reorder', $variant->id) }}" method="POST" class="hidden m-0">
+                                    @csrf @method('PUT')
+                                    <div id="reorder-inputs"></div>
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow animate-pulse">
+                                        Сохранить порядок
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
 
                     <div id="variant-task-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
@@ -185,12 +197,21 @@
                                     </div>
                                 </div>
 
-                                <!-- ИЗМЕНЕНИЕ 5: Крестик теперь всегда видим, но бледный. При наведении яркий -->
+                                <!-- ИЗМЕНЕНИЕ 5: Умное AJAX-удаление без перезагрузки -->
                                 @if(!$isReadOnly)
-                                    <form action="{{ route('variants.detach', [$variant->id, $task->id]) }}" method="POST" class="absolute top-2 right-2 m-0">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-gray-300 hover:bg-red-100 hover:text-red-600 rounded w-6 h-6 flex items-center justify-center font-bold transition-colors" title="Убрать из варианта">&times;</button>
-                                    </form>
+                                    <button type="button" 
+                                        @click="if(confirm('Убрать из варианта?')) {
+                                            fetch('{{ route('variants.detach', [$variant->id, $task->id]) }}', {
+                                                method: 'DELETE',
+                                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                                            }).then(() => { 
+                                                $el.closest('.variant-task-item').remove(); 
+                                                taskCount--; 
+                                            });
+                                        }" 
+                                        class="absolute top-2 right-2 text-gray-300 hover:bg-red-100 hover:text-red-600 rounded w-6 h-6 flex items-center justify-center font-bold transition-colors" title="Убрать из варианта">
+                                        &times;
+                                    </button>
                                 @endif
                             </div>
                         @empty
