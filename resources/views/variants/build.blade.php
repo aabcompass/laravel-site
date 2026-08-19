@@ -195,6 +195,15 @@
                                     <div class="text-gray-700 line-clamp-3 leading-relaxed mt-1">
                                         {!! nl2br(e($task->task_text)) !!}
                                     </div>
+                                    
+                                    <!-- ВЫВОД КАРТИНОК В ПРАВОЙ КОЛОНКЕ -->
+                                    @if($task->taskImages && $task->taskImages->count() > 0)
+                                        <div class="mt-3 flex flex-wrap gap-2 p-2 bg-gray-50 rounded border">
+                                            @foreach($task->taskImages as $img)
+                                                <img src="{{ asset($img->file_path) }}" style="width: {{ $img->scale }}%" class="object-contain border bg-white rounded shadow-sm max-h-32">
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- ИЗМЕНЕНИЕ 5: Умное AJAX-удаление без перезагрузки -->

@@ -111,7 +111,7 @@ class WorkVariantController extends Controller
     {
         // 1. Получаем задачи, уже добавленные в этот вариант
         // Используем связь tasks() из модели, которая сразу сортирует по pivot_sorting_num
-        $variantTasks = $variant->tasks()->with('topic')->get();
+        $variantTasks = $variant->tasks()->with(['topic', 'taskImages'])->get();
         // Массив ID уже добавленных задач (чтобы исключить их из поиска слева)
         $attachedTaskIds = $variantTasks->pluck('id')->toArray();
 
