@@ -129,6 +129,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/variants/{variant}/detach/{task}', [WorkVariantController::class, 'detachTask'])->name('variants.detach');
         Route::put('/variants/{variant}/reorder', [WorkVariantController::class, 'reorderTasks'])->name('variants.reorder');
         Route::put('/variants/{variant}/sort-complexity', [WorkVariantController::class, 'sortByComplexity'])->name('variants.sortComplexity');
+        // Настройки печати и печать
+        Route::get('/variants/{variant}/print-config', [WorkVariantController::class, 'printConfig'])->name('variants.printConfig');
+        Route::put('/variants/{variant}/print-config', [WorkVariantController::class, 'updatePrintConfig'])->name('variants.updatePrintConfig');
+        Route::get('/variants/{variant}/print', [WorkVariantController::class, 'print'])->name('variants.print');
     });
 });
 

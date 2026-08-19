@@ -7,9 +7,9 @@
                     Конструктор: {{ $variant->name }} <span class="text-gray-400 text-sm font-normal">v.{{ $variant->version }} (ID: {{ $variant->id }})</span>
                 </h2>
             </div>
-            <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-1.5 px-4 rounded shadow-sm text-sm transition">
+            <a href="{{ route('variants.printConfig', $variant->id) }}" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-1.5 px-4 rounded shadow-sm text-sm transition">
                 🖨 Распечатать вариант
-            </button>
+            </a>
         </div>
     </x-slot>
 

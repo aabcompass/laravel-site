@@ -51,8 +51,8 @@ class WorkVariantController extends Controller
     public function clone(WorkVariant $variant)
     {
         DB::transaction(function () use ($variant) {
-            // 1. Копируем сам вариант
-            $newVariant = $variant->replicate();
+            // 1. Копируем сам вариант, ИСКЛЮЧАЯ комментарий и инструкции
+            $newVariant = $variant->replicate(['teacher_comment', 'print_instructions']);
             $newVariant->name = $variant->name . ' (Копия)';
             $newVariant->author_id = auth()->id(); // Автором становится тот, кто клонировал
             $newVariant->version = 1;
@@ -238,5 +238,63 @@ class WorkVariantController extends Controller
         });
 
         return back()->with('success', 'Задачи в варианте отсортированы по возрастанию сложности.');
+    }
+
+    // =========================================================================
+    // УРОВЕНЬ 3: КОНФИГУРАЦИЯ ПЕЧАТИ И ПЕЧАТЬ
+    // =========================================================================
+
+    /**
+     * Страница настроек печати
+     */
+    public function printConfig(WorkVariant $variant)
+    {
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        // Получаем группы (для симуляции шапки, если хотим выбрать, для кого печатаем)
+        $groups = Group::orderBy('grade')->orderBy('name')->get();
+
+        return view('variants.print-config', compact('variant', 'groups'));
+    }
+
+    /**
+     * Сохранение настроек печати
+     */
+    public function updatePrintConfig(Request $request, WorkVariant $variant)
+    {
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $data = $request->validate([
+            'teacher_comment' => 'nullable|string',
+            'print_instructions' => 'nullable|string',
+            'print_font_size' => 'required|integer|min:8|max:24',
+            'print_spacing_lines' => 'required|integer|min:0|max:10',
+            'print_copies_per_page' => 'required|in:1,2,4',
+            'print_show_name_field' => 'nullable|boolean',
+        ]);
+
+        // Чекбоксы в HTML не отправляются, если не отмечены, поэтому принудительно ставим false
+        $data['print_show_name_field'] = $request->has('print_show_name_field');
+
+        $variant->update($data);
+
+        return back()->with('success', 'Настройки печати и комментарии сохранены.');
+    }
+
+    /**
+     * Сама страница для вывода на принтер
+     */
+    public function print(Request $request, WorkVariant $variant)
+    {
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $variantTasks = $variant->tasks()->with('taskImages', 'solutionImages')->get();
+        
+        // Доп. опции, которые не сохраняются в базу, а передаются из формы перед самой печатью
+        $showAnswers = $request->boolean('show_answers');
+        $selectedGroupId = $request->input('group_id');
+        $group = $selectedGroupId ? Group::find($selectedGroupId) : null;
+
+        return view('variants.print', compact('variant', 'variantTasks', 'showAnswers', 'group'));
     }
 }

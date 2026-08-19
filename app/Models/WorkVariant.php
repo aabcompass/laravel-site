@@ -11,7 +11,10 @@ class WorkVariant extends Model
 
     protected $fillable = [
         'work_id', 'name', 'description', 'sorting_num', 
-        'public_hash', 'version', 'is_archived', 'parent_id', 'author_id'
+        'public_hash', 'version', 'is_archived', 'parent_id', 'author_id',
+        // НОВЫЕ ПОЛЯ:
+        'teacher_comment', 'print_instructions', 'print_font_size', 
+        'print_spacing_lines', 'print_copies_per_page', 'print_show_name_field'
     ];
 
     public function work() { return $this->belongsTo(Work::class, 'work_id'); }
