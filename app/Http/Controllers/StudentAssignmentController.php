@@ -141,7 +141,7 @@ class StudentAssignmentController extends Controller
         return back()->with('success', 'Работа отозвана для доработки.');
     }
 
- public function index(Request $request)
+    public function index(Request $request)
     {
         $student = auth()->user(); // Получаем объект ученика целиком
 
@@ -201,19 +201,22 @@ class StudentAssignmentController extends Controller
             $complexityStats['data'][] = $stat->count;
         }
 
+
         // =====================================================================
         // НОВЫЙ БЛОК: 5. ПОЛУЧАЕМ ВАРИАНТЫ, ВЫДАННЫЕ ГРУППЕ УЧЕНИКА
         // =====================================================================
         $groupVariants = collect();
         if ($student->group_id) {
             $groupVariants = \App\Models\AssignmentHistory::where('group_id', $student->group_id)
-                ->with(['variant.work', 'teacher'])
+                ->with(['variant.work']) // teacher нам больше не нужен
                 ->orderBy('assigned_at', 'desc')
-                ->get();
-        }
+                ->paginate(15, ['*'], 'vp')
+                ->withQueryString();
+        } // <--- ЗДЕСЬ ДОЛЖНА БЫТЬ ТОЛЬКО ОДНА СКОБКА!
 
+        // Возвращаем в шаблон
         return view('assignments.index', compact(
-            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort', 'groupVariants' // Добавили groupVariants
+            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort', 'groupVariants'
         ));
     }
 

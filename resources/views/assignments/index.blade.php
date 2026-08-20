@@ -49,24 +49,40 @@
 
             <!-- НОВЫЙ БЛОК: ВАРИАНТЫ ДЛЯ ГРУППЫ -->
             @if(isset($groupVariants) && $groupVariants->count() > 0)
-                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 shadow-sm">
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-5 shadow-sm">
                     <h3 class="font-bold text-lg text-indigo-900 mb-4 flex items-center gap-2">
                         <span>📚 Работы для вашей группы</span>
                         <span class="bg-indigo-200 text-indigo-800 text-xs px-2 py-0.5 rounded-full">{{ auth()->user()->group->name ?? '' }}</span>
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Сетка: 1 колонка на мобилках, 2 на планшетах, 3-4 на десктопах, 5 на широких экранах -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                         @foreach($groupVariants as $history)
-                            <a href="{{ route('student.variants.show', $history->variant->id) }}" class="block bg-white p-4 rounded border border-indigo-100 hover:border-indigo-400 hover:shadow-md transition group">
-                                <div class="text-xs text-indigo-500 font-bold mb-1">{{ $history->variant->work->title ?? 'Без названия' }}</div>
-                                <div class="font-bold text-gray-800 text-lg group-hover:text-indigo-700 transition">{{ $history->variant->name }}</div>
-                                <div class="mt-3 flex justify-between items-center text-xs text-gray-500 border-t pt-2">
-                                    <span>Выдал: {{ $history->teacher->first_name ?? '' }} {{ $history->teacher->last_name ?? '' }}</span>
-                                    <span>{{ $history->assigned_at->format('d.m.Y') }}</span>
+                            <a href="{{ route('student.variants.show', $history->variant->id) }}" class="block bg-white p-3 rounded border border-indigo-100 hover:border-indigo-400 hover:shadow-md transition group">
+                                <!-- Название работы (папки) -->
+                                <div class="text-[10px] text-indigo-500 font-bold mb-1 truncate uppercase tracking-wider" title="{{ $history->variant->work->title ?? 'Без названия' }}">
+                                    {{ $history->variant->work->title ?? 'Без названия' }}
+                                </div>
+                                
+                                <!-- Название варианта -->
+                                <div class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 transition truncate" title="{{ $history->variant->name }}">
+                                    {{ $history->variant->name }}
+                                </div>
+                                
+                                <!-- Дата (сдвинута вправо) -->
+                                <div class="mt-2 text-xs text-gray-400 border-t border-gray-100 pt-1.5 text-right">
+                                    {{ $history->assigned_at->format('d.m.Y') }}
                                 </div>
                             </a>
                         @endforeach
                     </div>
+
+                    <!-- Пагинация вариантов (показывается только если страниц больше одной) -->
+                    @if(method_exists($groupVariants, 'links') && $groupVariants->hasPages())
+                        <div class="mt-4 pt-4 border-t border-indigo-200/50">
+                            {{ $groupVariants->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
 
