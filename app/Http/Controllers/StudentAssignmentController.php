@@ -201,22 +201,37 @@ class StudentAssignmentController extends Controller
             $complexityStats['data'][] = $stat->count;
         }
 
-
         // =====================================================================
         // НОВЫЙ БЛОК: 5. ПОЛУЧАЕМ ВАРИАНТЫ, ВЫДАННЫЕ ГРУППЕ УЧЕНИКА
         // =====================================================================
         $groupVariants = collect();
-        if ($student->group_id) {
-            $groupVariants = \App\Models\AssignmentHistory::where('group_id', $student->group_id)
-                ->with(['variant.work']) // teacher нам больше не нужен
-                ->orderBy('assigned_at', 'desc')
-                ->paginate(15, ['*'], 'vp')
-                ->withQueryString();
-        } // <--- ЗДЕСЬ ДОЛЖНА БЫТЬ ТОЛЬКО ОДНА СКОБКА!
+        $vSort = $request->input('v_sort', 'date_desc'); // Переменная для сортировки таблицы вариантов
 
-        // Возвращаем в шаблон
+        if ($student->group_id) {
+            $queryVars = \App\Models\AssignmentHistory::query()
+                ->select('Assignment_History.*') // Выбираем поля только из истории
+                ->where('Assignment_History.group_id', $student->group_id)
+                // Джоиним таблицы, чтобы по ним можно было сортировать
+                ->join('Work_Variants', 'Assignment_History.work_variant_id', '=', 'Work_Variants.id')
+                ->join('Works', 'Work_Variants.work_id', '=', 'Works.id')
+                ->with(['variant.work']); // Жадная загрузка для вывода
+            
+            // Логика сортировки колонок таблицы
+            switch ($vSort) {
+                case 'work_asc':     $queryVars->orderBy('Works.title', 'asc'); break;
+                case 'work_desc':    $queryVars->orderBy('Works.title', 'desc'); break;
+                case 'variant_asc':  $queryVars->orderBy('Work_Variants.name', 'asc'); break;
+                case 'variant_desc': $queryVars->orderBy('Work_Variants.name', 'desc'); break;
+                case 'date_asc':     $queryVars->orderBy('Assignment_History.assigned_at', 'asc'); break;
+                case 'date_desc':
+                default:             $queryVars->orderBy('Assignment_History.assigned_at', 'desc'); break;
+            }
+
+            $groupVariants = $queryVars->paginate(15, ['*'], 'vp')->withQueryString();
+        }
+
         return view('assignments.index', compact(
-            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort', 'groupVariants'
+            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort', 'groupVariants', 'vSort'
         ));
     }
 

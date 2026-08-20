@@ -47,45 +47,87 @@
                 @endforeach
             </div>
 
-            <!-- НОВЫЙ БЛОК: ВАРИАНТЫ ДЛЯ ГРУППЫ -->
+            <!-- НОВЫЙ БЛОК: ВАРИАНТЫ ДЛЯ ГРУППЫ (Табличный вид) -->
             @if(isset($groupVariants) && $groupVariants->count() > 0)
-                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-5 shadow-sm">
-                    <h3 class="font-bold text-lg text-indigo-900 mb-4 flex items-center gap-2">
-                        <span>📚 Работы для вашей группы</span>
-                        <span class="bg-indigo-200 text-indigo-800 text-xs px-2 py-0.5 rounded-full">{{ auth()->user()->group->name ?? '' }}</span>
-                    </h3>
+                <div class="bg-white border border-indigo-200 rounded-lg shadow-sm overflow-hidden mb-6">
+                    <div class="bg-indigo-50 px-5 py-3 border-b border-indigo-100 flex justify-between items-center">
+                        <h3 class="font-bold text-indigo-900 flex items-center gap-2">
+                            <span>📚 Работы для вашей группы</span>
+                            <span class="bg-indigo-200 text-indigo-800 text-[10px] uppercase px-2 py-0.5 rounded-full tracking-wide">
+                                {{ auth()->user()->group->name ?? '' }}
+                            </span>
+                        </h3>
+                    </div>
                     
-                    <!-- Сетка: 1 колонка на мобилках, 2 на планшетах, 3-4 на десктопах, 5 на широких экранах -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                        @foreach($groupVariants as $history)
-                            <a href="{{ route('student.variants.show', $history->variant->id) }}" class="block bg-white p-3 rounded border border-indigo-100 hover:border-indigo-400 hover:shadow-md transition group">
-                                <!-- Название работы (папки) -->
-                                <div class="text-[10px] text-indigo-500 font-bold mb-1 truncate uppercase tracking-wider" title="{{ $history->variant->work->title ?? 'Без названия' }}">
-                                    {{ $history->variant->work->title ?? 'Без названия' }}
-                                </div>
-                                
-                                <!-- Название варианта -->
-                                <div class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 transition truncate" title="{{ $history->variant->name }}">
-                                    {{ $history->variant->name }}
-                                </div>
-                                
-                                <!-- Дата (сдвинута вправо) -->
-                                <div class="mt-2 text-xs text-gray-400 border-t border-gray-100 pt-1.5 text-right">
-                                    {{ $history->assigned_at->format('d.m.Y') }}
-                                </div>
-                            </a>
-                        @endforeach
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-700">
+                            <thead class="text-xs uppercase bg-gray-50 border-b text-gray-500">
+                                <tr>
+                                    <!-- Кликабельный заголовок: Дата -->
+                                    <th class="px-5 py-3 w-32 hover:bg-gray-100 transition cursor-pointer" 
+                                        onclick="window.location='{{ request()->fullUrlWithQuery(['v_sort' => $vSort == 'date_desc' ? 'date_asc' : 'date_desc']) }}'">
+                                        <div class="flex items-center gap-1">
+                                            Дата выдачи
+                                            @if($vSort == 'date_desc') <span class="text-indigo-500">▼</span> 
+                                            @elseif($vSort == 'date_asc') <span class="text-indigo-500">▲</span> @endif
+                                        </div>
+                                    </th>
+
+                                    <!-- Кликабельный заголовок: Работа -->
+                                    <th class="px-5 py-3 hover:bg-gray-100 transition cursor-pointer"
+                                        onclick="window.location='{{ request()->fullUrlWithQuery(['v_sort' => $vSort == 'work_asc' ? 'work_desc' : 'work_asc']) }}'">
+                                        <div class="flex items-center gap-1">
+                                            Название работы (Тема)
+                                            @if($vSort == 'work_asc') <span class="text-indigo-500">▲</span> 
+                                            @elseif($vSort == 'work_desc') <span class="text-indigo-500">▼</span> @endif
+                                        </div>
+                                    </th>
+
+                                    <!-- Кликабельный заголовок: Вариант -->
+                                    <th class="px-5 py-3 hover:bg-gray-100 transition cursor-pointer"
+                                        onclick="window.location='{{ request()->fullUrlWithQuery(['v_sort' => $vSort == 'variant_asc' ? 'variant_desc' : 'variant_asc']) }}'">
+                                        <div class="flex items-center gap-1">
+                                            Вариант
+                                            @if($vSort == 'variant_asc') <span class="text-indigo-500">▲</span> 
+                                            @elseif($vSort == 'variant_desc') <span class="text-indigo-500">▼</span> @endif
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($groupVariants as $history)
+                                    <!-- Вся строка кликабельна -->
+                                    <tr onclick="window.location='{{ route('student.variants.show', $history->variant->id) }}'" 
+                                        class="border-b hover:bg-indigo-50 cursor-pointer transition-colors group">
+                                        
+                                        <td class="px-5 py-2.5 whitespace-nowrap text-gray-500 group-hover:text-indigo-600 transition">
+                                            {{ $history->assigned_at->format('d.m.Y') }}
+                                        </td>
+                                        
+                                        <td class="px-5 py-2.5 font-medium text-gray-800 group-hover:text-indigo-800 transition">
+                                            {{ $history->variant->work->title ?? 'Без названия' }}
+                                        </td>
+                                        
+                                        <td class="px-5 py-2.5 text-gray-600 group-hover:text-indigo-600 transition flex items-center justify-between">
+                                            <span>{{ $history->variant->name }}</span>
+                                            <!-- Маленькая стрелочка при наведении, подсказывающая, что можно кликнуть -->
+                                            <span class="opacity-0 group-hover:opacity-100 text-indigo-400 transition">&rarr;</span>
+                                        </td>
+                                        
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
 
-                    <!-- Пагинация вариантов (показывается только если страниц больше одной) -->
                     @if(method_exists($groupVariants, 'links') && $groupVariants->hasPages())
-                        <div class="mt-4 pt-4 border-t border-indigo-200/50">
+                        <div class="p-3 border-t bg-gray-50">
                             {{ $groupVariants->links() }}
                         </div>
                     @endif
                 </div>
             @endif
-
+            
             <!-- БЛОК 2: ГРАФИК УСПЕВАЕМОСТИ -->
             @if(!empty($complexityStats['data']))
                 <div class="bg-white p-4 rounded-lg shadow-sm border">
