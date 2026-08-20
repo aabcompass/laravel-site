@@ -133,6 +133,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/variants/{variant}/print-config', [WorkVariantController::class, 'printConfig'])->name('variants.printConfig');
         Route::put('/variants/{variant}/print-config', [WorkVariantController::class, 'updatePrintConfig'])->name('variants.updatePrintConfig');
         Route::get('/variants/{variant}/print', [WorkVariantController::class, 'print'])->name('variants.print');
+        // Выдача и отзыв вариантов
+        Route::post('/variants/{variant}/assign', [WorkVariantController::class, 'assignToGroup'])->name('variants.assign');
+        Route::delete('/variants/assignments/{history}', [WorkVariantController::class, 'revokeFromGroup'])->name('variants.revoke');
     });
 });
 
