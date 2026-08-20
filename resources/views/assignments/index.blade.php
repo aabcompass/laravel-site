@@ -47,6 +47,29 @@
                 @endforeach
             </div>
 
+            <!-- НОВЫЙ БЛОК: ВАРИАНТЫ ДЛЯ ГРУППЫ -->
+            @if(isset($groupVariants) && $groupVariants->count() > 0)
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 shadow-sm">
+                    <h3 class="font-bold text-lg text-indigo-900 mb-4 flex items-center gap-2">
+                        <span>📚 Работы для вашей группы</span>
+                        <span class="bg-indigo-200 text-indigo-800 text-xs px-2 py-0.5 rounded-full">{{ auth()->user()->group->name ?? '' }}</span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach($groupVariants as $history)
+                            <a href="{{ route('student.variants.show', $history->variant->id) }}" class="block bg-white p-4 rounded border border-indigo-100 hover:border-indigo-400 hover:shadow-md transition group">
+                                <div class="text-xs text-indigo-500 font-bold mb-1">{{ $history->variant->work->title ?? 'Без названия' }}</div>
+                                <div class="font-bold text-gray-800 text-lg group-hover:text-indigo-700 transition">{{ $history->variant->name }}</div>
+                                <div class="mt-3 flex justify-between items-center text-xs text-gray-500 border-t pt-2">
+                                    <span>Выдал: {{ $history->teacher->first_name ?? '' }} {{ $history->teacher->last_name ?? '' }}</span>
+                                    <span>{{ $history->assigned_at->format('d.m.Y') }}</span>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- БЛОК 2: ГРАФИК УСПЕВАЕМОСТИ -->
             @if(!empty($complexityStats['data']))
                 <div class="bg-white p-4 rounded-lg shadow-sm border">

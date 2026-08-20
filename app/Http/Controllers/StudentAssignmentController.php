@@ -141,13 +141,12 @@ class StudentAssignmentController extends Controller
         return back()->with('success', 'Работа отозвана для доработки.');
     }
 
-    public function index(Request $request)
+ public function index(Request $request)
     {
-        $studentId = auth()->id();
+        $student = auth()->user(); // Получаем объект ученика целиком
 
         // 1. СТАТИСТИКА ДЛЯ КЛИКАБЕЛЬНЫХ КНОПОК
-        // Считаем количество задач по статусам
-        $statusCounts = StudentAssignment::where('student_id', $studentId)
+        $statusCounts = StudentAssignment::where('student_id', $student->id)
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -156,52 +155,40 @@ class StudentAssignmentController extends Controller
         $totalCount = array_sum($statusCounts);
 
         // 2. ПОЛУЧАЕМ ТЕМЫ ДЛЯ ВЫПАДАЮЩЕГО СПИСКА
-        // Берем только те темы, задачи из которых назначены этому студенту
-        $topicIds = StudentAssignment::where('student_id', $studentId)
+        $topicIds = StudentAssignment::where('student_id', $student->id)
             ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
             ->distinct()
             ->pluck('Tasks.topic_id');
             
         $topics = \App\Models\Topic::whereIn('id', $topicIds)->orderBy('name')->get();
 
-        // 3. СТРОИМ ОСНОВНОЙ ЗАПРОС
-        // Используем JOIN с Tasks, чтобы мы могли делать сортировку по сложности задачи (complexity)
+        // 3. СТРОИМ ОСНОВНОЙ ЗАПРОС (ИНДИВИДУАЛЬНЫЕ ЗАДАЧИ)
         $query = StudentAssignment::query()
-            ->where('student_id', $studentId)
-            ->select('Student_Assignments.*') // Выбираем поля только из назначений
+            ->where('student_id', $student->id)
+            ->select('Student_Assignments.*')
             ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
-            ->with(['task.topic', 'task.taskImages']); // Жадная загрузка
+            ->with(['task.topic', 'task.taskImages']);
 
-        // --- ФИЛЬТРЫ ---
         $query->when($request->status, fn($q, $v) => $q->where('status', $v));
         $query->when($request->topic_id, fn($q, $v) => $q->where('Tasks.topic_id', $v));
 
-        // --- СОРТИРОВКА ---
         $sort = $request->input('sort', 'date_desc');
         switch ($sort) {
-            case 'complexity_asc':
-                $query->orderBy('Tasks.complexity', 'asc');
-                break;
-            case 'complexity_desc':
-                $query->orderBy('Tasks.complexity', 'desc');
-                break;
-            case 'date_asc':
-                $query->orderBy('Student_Assignments.assigned_at', 'asc');
-                break;
+            case 'complexity_asc':  $query->orderBy('Tasks.complexity', 'asc'); break;
+            case 'complexity_desc': $query->orderBy('Tasks.complexity', 'desc'); break;
+            case 'date_asc':        $query->orderBy('Student_Assignments.assigned_at', 'asc'); break;
             case 'date_desc':
             default:
-                // Сначала задачи, требующие доработки, затем по дате назначения
                 $query->orderByRaw("CASE WHEN status = 'revision_needed' THEN 0 ELSE 1 END")
                       ->orderBy('Student_Assignments.assigned_at', 'desc');
                 break;
         }
 
-        // --- ПАГИНАЦИЯ ---
         $assignments = $query->paginate(15)->withQueryString();
 
-        // 4. ДАННЫЕ ДЛЯ ГРАФИКА СЛОЖНОСТИ (Только для 'accepted')
+        // 4. ДАННЫЕ ДЛЯ ГРАФИКА
         $complexityStats = [];
-        $acceptedTasks = StudentAssignment::where('student_id', $studentId)
+        $acceptedTasks = StudentAssignment::where('student_id', $student->id)
             ->where('status', 'accepted')
             ->join('Tasks', 'Student_Assignments.task_id', '=', 'Tasks.id')
             ->selectRaw('Tasks.complexity, count(*) as count')
@@ -214,9 +201,19 @@ class StudentAssignmentController extends Controller
             $complexityStats['data'][] = $stat->count;
         }
 
-        // Возвращаем в шаблон
+        // =====================================================================
+        // НОВЫЙ БЛОК: 5. ПОЛУЧАЕМ ВАРИАНТЫ, ВЫДАННЫЕ ГРУППЕ УЧЕНИКА
+        // =====================================================================
+        $groupVariants = collect();
+        if ($student->group_id) {
+            $groupVariants = \App\Models\AssignmentHistory::where('group_id', $student->group_id)
+                ->with(['variant.work', 'teacher'])
+                ->orderBy('assigned_at', 'desc')
+                ->get();
+        }
+
         return view('assignments.index', compact(
-            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort'
+            'assignments', 'statusCounts', 'totalCount', 'topics', 'complexityStats', 'sort', 'groupVariants' // Добавили groupVariants
         ));
     }
 
@@ -270,5 +267,27 @@ class StudentAssignmentController extends Controller
         }
 
         return view('assignments.progress', compact('topicsTree', 'stats'));
+    }
+
+    /**
+     * Просмотр варианта работы учеником
+     */
+    public function showVariant(\App\Models\WorkVariant $variant)
+    {
+        $student = auth()->user();
+
+        // Защита: Убеждаемся, что вариант действительно выдан группе этого ученика
+        $isAssignedToStudentGroup = \App\Models\AssignmentHistory::where('work_variant_id', $variant->id)
+                                        ->where('group_id', $student->group_id)
+                                        ->exists();
+
+        if (!$isAssignedToStudentGroup) {
+            abort(403, 'Доступ запрещен. Этот вариант не назначен вашей группе.');
+        }
+
+        // Получаем задачи варианта (вместе с картинками условий)
+        $variantTasks = $variant->tasks()->with('taskImages')->get();
+
+        return view('assignments.variant', compact('variant', 'variantTasks'));
     }
 }
