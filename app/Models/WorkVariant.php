@@ -28,7 +28,7 @@ class WorkVariant extends Model
     // Связь с задачами (Many-to-Many)
     public function tasks() {
         return $this->belongsToMany(Task::class, 'Work_Variant_Tasks', 'work_variant_id', 'task_id')
-                    ->withPivot('sorting_num')
+                    ->withPivot('sorting_num', 'is_self_assignable') // <- ДОБАВИЛИ is_self_assignable
                     ->orderBy('pivot_sorting_num');
     }
 

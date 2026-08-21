@@ -362,4 +362,26 @@ class WorkVariantController extends Controller
 
         return back()->with('success', 'Вариант успешно удален.');
     }
+
+    /**
+     * AJAX: Изменение права на самоназначение задачи внутри варианта
+     */
+    public function toggleSelfAssign(Request $request, WorkVariant $variant, \App\Models\Task $task)
+    {
+        // Проверка прав (как всегда: не выдан и автор/админ)
+        if ($variant->isAssigned()) abort(403);
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
+
+        $val = $request->input('is_self_assignable');
+        // Приводим пустую строку к null, а 0/1 к числам
+        $val = $val === null || $val === '' ? null : (int)$val;
+
+        // Обновляем напрямую в промежуточной таблице
+        \Illuminate\Support\Facades\DB::table('Work_Variant_Tasks')
+            ->where('work_variant_id', $variant->id)
+            ->where('task_id', $task->id)
+            ->update(['is_self_assignable' => $val]);
+
+        return response()->json(['success' => true]);
+    }
 }

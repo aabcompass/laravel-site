@@ -47,16 +47,15 @@
                 </div>
             @endif
 
-            <!-- ИЗМЕНЕНИЕ 1: md:flex-row заставит колонки стоять рядом почти всегда -->
+            <!-- ДВЕ КОЛОНКИ НА ЖЕСТКОЙ СЕТКЕ (GRID) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-180px)]">
 
-                <!-- ЛЕВАЯ КОЛОНКА: БАЗА ЗАДАЧ -->
+                <!-- ЛЕВАЯ КОЛОНКА: БАЗА ЗАДАЧ (7 частей из 12) -->
                 <div class="lg:col-span-7 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden" x-data="{ selectedTasks: [] }">
                     
                     <div class="bg-gray-50 border-b p-4">
                         <h3 class="font-bold text-gray-800 mb-3">База задач</h3>
                         
-                        <!-- ИЗМЕНЕНИЕ 2: Добавлены новые фильтры -->
                         <form method="GET" action="{{ route('variants.build', $variant->id) }}" class="flex flex-wrap gap-2 text-sm items-center">
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Текст или №..." class="border-gray-300 rounded py-1 px-2 w-32 focus:ring-blue-500">
                             
@@ -127,8 +126,15 @@
                                         <span class="font-bold text-gray-800">№{{ $task->id }}</span>
                                         <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">⭐ {{ $task->complexity }}</span>
                                         <span class="text-xs text-gray-500">📂 {{ $task->topic->name ?? '' }}</span>
+                                        
+                                        <!-- БЕЙДЖИК ГЛОБАЛЬНОГО САМОНАЗНАЧЕНИЯ -->
+                                        @if($task->is_self_assignable === 1)
+                                            <span class="text-[10px] font-bold bg-green-100 text-green-800 px-1 py-0.5 rounded" title="Глобально разрешено">🧑‍🎓 Открыта</span>
+                                        @elseif($task->is_self_assignable === 0)
+                                            <span class="text-[10px] font-bold bg-red-100 text-red-800 px-1 py-0.5 rounded" title="Глобально запрещено">🚫 Закрыта</span>
+                                        @endif
                                     </div>
-                                    <div class="text-gray-700 line-clamp-3 leading-relaxed">
+                                    <div class="text-gray-700 line-clamp-3 leading-relaxed mt-1">
                                         {!! nl2br(e($task->task_text)) !!}
                                     </div>
                                 </div>
@@ -140,7 +146,7 @@
                     <div class="border-t p-2 bg-white">{{ $libraryTasks->links() }}</div>
                 </div>
 
-                <!-- ПРАВАЯ КОЛОНКА: ЗАДАЧИ ВАРИАНТА -->
+                <!-- ПРАВАЯ КОЛОНКА: ЗАДАЧИ ВАРИАНТА (5 частей из 12) -->
                 <div class="lg:col-span-5 flex flex-col bg-white border rounded-lg shadow-sm overflow-hidden" x-data="{ taskCount: {{ $variantTasks->count() }} }">
                     
                     <div class="bg-indigo-50 border-b p-4 flex justify-between items-center flex-wrap gap-2">
@@ -150,13 +156,10 @@
                         </div>
                         
                         <div class="flex items-center gap-2">
-                            <!-- Кнопка сортировки по сложности -->
                             @if(!$isReadOnly && $variantTasks->count() > 1)
                                 <form action="{{ route('variants.sortComplexity', $variant->id) }}" method="POST" class="m-0" onsubmit="return confirm('Отсортировать задачи от легких к сложным? Текущий порядок будет изменен.')">
                                     @csrf @method('PUT')
-                                    <button type="submit" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold py-1.5 px-3 rounded shadow-sm transition">
-                                        Сорт. по сложности
-                                    </button>
+                                    <button type="submit" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold py-1.5 px-3 rounded shadow-sm transition">Сорт. по сложности</button>
                                 </form>
                             @endif
 
@@ -164,9 +167,7 @@
                                 <form id="reorder-form" action="{{ route('variants.reorder', $variant->id) }}" method="POST" class="hidden m-0">
                                     @csrf @method('PUT')
                                     <div id="reorder-inputs"></div>
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow animate-pulse">
-                                        Сохранить порядок
-                                    </button>
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow animate-pulse">Сохранить порядок</button>
                                 </form>
                             @endif
                         </div>
@@ -176,37 +177,65 @@
                         @forelse ($variantTasks as $task)
                             <div class="variant-task-item bg-white p-3 rounded border shadow-sm flex gap-3 relative group" data-id="{{ $task->id }}">
                                 
-                                <!-- ИЗМЕНЕНИЕ 3: Иконка из 6 точек (Grip vertical) -->
                                 @if(!$isReadOnly)
                                     <div class="drag-handle cursor-grab pt-1 text-gray-300 hover:text-indigo-500 active:cursor-grabbing">
-                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M9 5h2v2H9V5zm0 6h2v2H9v-2zm0 6h2v2H9v-2zm4-12h2v2h-2V5zm0 6h2v2h-2v-2zm0 6h2v2h-2v-2z"></path>
-                                        </svg>
+                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 5h2v2H9V5zm0 6h2v2H9v-2zm0 6h2v2H9v-2zm4-12h2v2h-2V5zm0 6h2v2h-2v-2zm0 6h2v2h-2v-2z"></path></svg>
                                     </div>
                                 @endif
 
                                 <div class="flex-1 text-sm pr-6">
-                                    <div class="mb-1 flex items-center gap-2">
-                                        <!-- ИЗМЕНЕНИЕ 4: Порядковый номер в варианте (1, 2, 3...) -->
+                                    <div class="mb-1 flex items-center gap-2 flex-wrap">
                                         <span class="font-black text-indigo-600 text-base border-r-2 border-indigo-200 pr-2 mr-1">{{ $loop->iteration }}.</span>
                                         <span class="font-bold text-gray-800 text-xs">№{{ $task->id }}</span>
                                         <span class="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">⭐{{ $task->complexity }}</span>
                                     </div>
+                                    
                                     <div class="text-gray-700 line-clamp-3 leading-relaxed mt-1">
                                         {!! nl2br(e($task->task_text)) !!}
                                     </div>
                                     
-                                    <!-- ВЫВОД КАРТИНОК В ПРАВОЙ КОЛОНКЕ -->
+                                    <!-- МИНИАТЮРЫ КАРТИНОК (ПРАВАЯ КОЛОНКА) -->
                                     @if($task->taskImages && $task->taskImages->count() > 0)
-                                        <div class="mt-3 flex flex-wrap gap-2 p-2 bg-gray-50 rounded border">
+                                        <div class="mt-2 flex flex-wrap gap-2">
                                             @foreach($task->taskImages as $img)
-                                                <img src="{{ asset($img->file_path) }}" style="width: {{ $img->scale }}%" class="object-contain border bg-white rounded shadow-sm max-h-32">
+                                                <a href="{{ asset($img->file_path) }}" target="_blank" class="block relative z-10 hover:z-50">
+                                                    <img src="{{ asset($img->file_path) }}" class="h-12 w-auto object-contain border bg-white rounded shadow-sm transition-transform duration-200 hover:scale-[3] origin-left">
+                                                </a>
                                             @endforeach
+                                        </div>
+                                    @endif
+
+                                    <!-- ВЫБОР САМОНАЗНАЧЕНИЯ -->
+                                    @php
+                                        $globalStatus = 'Не задано';
+                                        if ($task->is_self_assignable === 1) $globalStatus = 'Разрешено';
+                                        elseif ($task->is_self_assignable === 0) $globalStatus = 'Запрещено';
+                                    @endphp
+
+                                    @if(!$isReadOnly)
+                                        <div class="mt-3 text-xs border-t pt-2 flex items-center justify-between">
+                                            <label class="text-gray-500 flex items-center gap-2">
+                                                <span>Право взять:</span>
+                                                <select onchange="updateSelfAssign({{ $variant->id }}, {{ $task->id }}, this.value, this)" class="text-xs border-gray-300 rounded py-0.5 px-2 bg-gray-50 hover:bg-white cursor-pointer focus:ring-indigo-500">
+                                                    <option value="" {{ $task->pivot->is_self_assignable === null ? 'selected' : '' }}>Глобально ({{ $globalStatus }})</option>
+                                                    <option value="1" {{ $task->pivot->is_self_assignable === 1 ? 'selected' : '' }}>✅ Разрешить в варианте</option>
+                                                    <option value="0" {{ $task->pivot->is_self_assignable === 0 ? 'selected' : '' }}>🚫 Запретить в варианте</option>
+                                                </select>
+                                            </label>
+                                            <span class="text-green-500 font-bold opacity-0 transition-opacity duration-300" id="saved-{{ $task->id }}">Сохранено ✓</span>
+                                        </div>
+                                    @else
+                                        <div class="mt-3 text-xs text-gray-500 border-t pt-2">
+                                            Право взять самому: 
+                                            @if($task->pivot->is_self_assignable === 1) <strong class="text-green-600">Разрешено (в варианте)</strong>
+                                            @elseif($task->pivot->is_self_assignable === 0) <strong class="text-red-600">Запрещено (в варианте)</strong>
+                                            @else Глобально (<strong>{{ $globalStatus }}</strong>)
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
 
-                                <!-- ИЗМЕНЕНИЕ 5: Умное AJAX-удаление без перезагрузки -->
+                                <!-- AJAX КНОПКА УДАЛЕНИЯ -->
                                 @if(!$isReadOnly)
                                     <button type="button" 
                                         @click="if(confirm('Убрать из варианта?')) {
@@ -231,10 +260,30 @@
                     </div>
 
                 </div>
-
             </div>
         </div>
     </div>
+
+    <!-- Скрипты -->
+    <script>
+        // Скрипт для сохранения настроек самоназначения
+        async function updateSelfAssign(variantId, taskId, val, selectElement) {
+            try {
+                let res = await fetch(`/variants/${variantId}/tasks/${taskId}/self-assign`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: JSON.stringify({ is_self_assignable: val })
+                });
+                if (res.ok) {
+                    let msg = document.getElementById('saved-' + taskId);
+                    msg.classList.remove('opacity-0');
+                    setTimeout(() => msg.classList.add('opacity-0'), 2000);
+                }
+            } catch (e) {
+                alert('Ошибка при сохранении настройки.');
+            }
+        }
+    </script>
 
     @if(!$isReadOnly && $variantTasks->count() > 0)
         <script>

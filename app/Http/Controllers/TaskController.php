@@ -186,6 +186,7 @@ class TaskController extends Controller
             'answer_units' => 'nullable|string|max:50',
             'advice_text' => 'nullable|string',
             'author_solution_text' => 'nullable|string',
+            'is_self_assignable' => 'nullable|boolean',
         ];
     }
 

@@ -26,6 +26,7 @@ class StudentAssignment extends Model
         'due_date',
         'submitted_at',
         'checked_at',
+        'is_self_assigned',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class StudentAssignment extends Model
         'due_date' => 'datetime',
         'submitted_at' => 'datetime',
         'checked_at' => 'datetime',
+        'is_self_assigned' => 'boolean',
     ];
 
     // --- СВЯЗИ ---

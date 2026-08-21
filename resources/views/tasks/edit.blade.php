@@ -96,6 +96,18 @@
                             <label class="block font-medium text-sm text-gray-700">Сложность (1-255) <span class="text-red-500">*</span></label>
                             <input type="number" name="complexity" value="{{ old('complexity', $task->complexity ?? 1) }}" min="1" max="255" class="mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
                         </div>
+                        
+                        <!-- Настройка самоназначения -->
+                        <div>
+                            <label class="block font-medium text-sm text-gray-700">Самоназначение учеником</label>
+                            <select name="is_self_assignable" class="mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500">
+                                <!-- Изменили текст на более логичный -->
+                                <option value="" {{ old('is_self_assignable', $task->is_self_assignable ?? null) === null ? 'selected' : '' }}>Не задано (определяется вариантом)</option>
+                                <option value="1" {{ old('is_self_assignable', $task->is_self_assignable ?? null) === 1 ? 'selected' : '' }}>✅ Разрешить брать задачу</option>
+                                <option value="0" {{ old('is_self_assignable', $task->is_self_assignable ?? null) === 0 ? 'selected' : '' }}>🚫 Запретить</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 

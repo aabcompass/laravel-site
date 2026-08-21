@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/assignments/{assignment}/submit', [StudentAssignmentController::class, 'submit'])->name('assignments.submit');
     Route::post('/assignments/{assignment}/recall', [StudentAssignmentController::class, 'recall'])->name('assignments.recall');
     Route::delete('/assignments/{assignment}/attachments/{attachment}', [StudentAssignmentController::class, 'destroyAttachment'])->name('assignments.attachments.destroy');
- 
+    Route::post('/student/variants/{variant}/tasks/{task}/self-assign', [StudentAssignmentController::class, 'selfAssign'])->name('student.variants.selfAssign');
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
@@ -154,6 +154,7 @@ Route::middleware('auth')->group(function () {
         // Проверка решений учителем
         Route::get('/assignments/review/{assignment}', [ReviewController::class, 'show'])->name('assignments.review');
         Route::put('/assignments/review/{assignment}', [ReviewController::class, 'update'])->name('assignments.review.update');
+        Route::patch('/variants/{variant}/tasks/{task}/self-assign', [WorkVariantController::class, 'toggleSelfAssign'])->name('variants.toggleSelfAssign');
     });
 });
 

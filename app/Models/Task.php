@@ -22,7 +22,8 @@ class Task extends Model
         'answer_numeric',
         'answer_units',
         'advice_text',
-        'author_solution_text'
+        'author_solution_text',
+        'is_self_assignable',
     ];
 
     // --- СВЯЗИ ---
@@ -68,5 +69,25 @@ class Task extends Model
             'task_id',            // Внешний ключ текущей модели
             'work_variant_id'     // Внешний ключ связываемой модели
         );
+    }
+
+    /**
+     * Можно ли ученику самому взять эту задачу?
+     * @param bool|null $variantRule - Правило, переопределенное в конкретном варианте
+     */
+    public function canBeSelfAssigned($variantRule = null)
+    {
+        // 1. Если в варианте жестко задано Да(1) или Нет(0) - слушаемся варианта
+        if ($variantRule !== null) {
+            return (bool) $variantRule;
+        }
+
+        // 2. Иначе смотрим глобальную настройку самой задачи
+        if ($this->is_self_assignable !== null) {
+            return (bool) $this->is_self_assignable;
+        }
+
+        // 3. Если везде NULL - запрещено
+        return false;
     }
 }
