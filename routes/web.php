@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkController;
 use App\Http\Controllers\WorkVariantController;
 use App\Http\Controllers\PublicController; 
+use App\Http\Controllers\TutorController;
 
 
 Route::get('/', function () {
@@ -140,6 +141,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/variants/assignments/{history}', [WorkVariantController::class, 'revokeFromGroup'])->name('variants.revoke');
         // Удаление вариантов
         Route::delete('/variants/{variant}', [WorkVariantController::class, 'destroy'])->name('variants.destroy');
+        // Индивидуальная работа (Мои ученики)
+        Route::get('/tutors/students', [TutorController::class, 'index'])->name('tutors.index');
+        Route::post('/tutors/students', [TutorController::class, 'store'])->name('tutors.store');
+        Route::delete('/tutors/students', [TutorController::class, 'destroy'])->name('tutors.destroy');
     });
 });
 

@@ -82,4 +82,18 @@ class User extends Authenticatable
         // Указываем внешний ключ author_id, так как по умолчанию Laravel искал бы user_id
         return $this->hasMany(Task::class, 'author_id');
     }
+
+    // Ученики, которых ведет этот учитель
+    public function tutoredStudents()
+    {
+        return $this->belongsToMany(User::class, 'Tutor_Students', 'teacher_id', 'student_id')
+                    ->withPivot('created_at');
+    }
+
+    // Учителя, которые ведут этого ученика
+    public function tutors()
+    {
+        return $this->belongsToMany(User::class, 'Tutor_Students', 'student_id', 'teacher_id')
+                    ->withPivot('created_at');
+    }
 }
