@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Telegram\TelegramMessage;
+use NotificationChannels\Telegram\TelegramChannel;
 
 class TelegramAssignmentNotification extends Notification
 {
@@ -26,7 +27,7 @@ class TelegramAssignmentNotification extends Notification
     public function via($notifiable)
     {
         // Отправляем только если у пользователя привязан Telegram
-        return $notifiable->telegram_chat_id ? ['telegram'] : [];
+        return $notifiable->telegram_chat_id ? [TelegramChannel::class] : [];
     }
 
     public function toTelegram($notifiable)
