@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "intervention/image": "^3.11",
+        "laravel-notification-channels/telegram": "^6.0",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9"
     },

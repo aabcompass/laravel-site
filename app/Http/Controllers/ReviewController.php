@@ -65,6 +65,9 @@ class ReviewController extends Controller
             'checked_at' => now(),
         ]);
 
+        $assignment->load(['task', 'student']);
+        $assignment->student->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'reviewed'));
+
         return redirect()->route('tutors.matrix')->with('success', "Работа ученика {$assignment->student->last_name} проверена!");
     }
 }

@@ -94,6 +94,12 @@ class TutorMatrixController extends Controller
             ['assigner_id' => auth()->id(), 'status' => 'assigned', 'assigned_at' => now()]
         );
 
+        // ДОБАВЛЯЕМ ЭТОТ БЛОК:
+        if ($assignment->wasRecentlyCreated) {
+            $assignment->load(['task', 'student']);
+            $assignment->student->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'assigned'));
+        }
+
         return response()->json(['success' => true, 'assignment_id' => $assignment->id]);
     }
 

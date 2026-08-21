@@ -96,4 +96,9 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'Tutor_Students', 'student_id', 'teacher_id')
                     ->withPivot('created_at');
     }
+
+    public function routeNotificationForTelegram()
+    {
+        return $this->telegram_chat_id;
+    }
 }

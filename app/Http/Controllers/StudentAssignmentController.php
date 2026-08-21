@@ -90,6 +90,12 @@ class StudentAssignmentController extends Controller
             }
         }
 
+        $assignment->load(['task', 'student', 'assigner']);
+        if ($assignment->assigner) {
+            $assignment->assigner->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'submitted'));
+        }
+
+
         return back()->with('success', 'Решение успешно отправлено на проверку!');
     }
 
