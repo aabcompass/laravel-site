@@ -19,7 +19,6 @@
                 async toggle() {
                     if (this.loading) return;
 
-                    // Если работа отправлена, проверена или на доработке -> Переход на страницу проверки
                     if (['submitted', 'revision_needed', 'accepted'].includes(this.status)) {
                         window.location.href = `/assignments/review/${this.assignmentId}`;
                         return;
@@ -27,37 +26,51 @@
 
                     this.loading = true;
 
-                    if (!this.status) {
-                        // НАЗНАЧАЕМ ЗАДАЧУ
-                        let res = await fetch('{{ route('tutors.matrix.assign') }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                            body: JSON.stringify({ task_id: taskId, student_id: studentId })
-                        });
-                        let data = await res.json();
-                        if(data.success) {
-                            this.status = 'assigned';
-                            this.assignmentId = data.assignment_id;
-                        } else {
-                            alert(data.message);
+                    try {
+                        if (!this.status) {
+                            // НАЗНАЧАЕМ ЗАДАЧУ
+                            let res = await fetch('{{ route('tutors.matrix.assign') }}', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({ task_id: taskId, student_id: studentId })
+                            });
+                            
+                            // Если сервер вернул ошибку 500, перехватываем её
+                            if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+                            
+                            let data = await res.json();
+                            if(data.success) {
+                                this.status = 'assigned';
+                                this.assignmentId = data.assignment_id;
+                            } else {
+                                alert(data.message);
+                            }
+                        } else if (this.status === 'assigned') {
+                            // СНИМАЕМ НАЗНАЧЕНИЕ
+                            if(!confirm('Отменить назначение?')) return;
+                            let res = await fetch('{{ route('tutors.matrix.unassign') }}', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({ task_id: taskId, student_id: studentId })
+                            });
+                            
+                            if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+                            
+                            let data = await res.json();
+                            if(data.success) {
+                                this.status = '';
+                                this.assignmentId = null;
+                            } else {
+                                alert(data.message);
+                            }
                         }
-                    } else if (this.status === 'assigned') {
-                        // СНИМАЕМ НАЗНАЧЕНИЕ
-                        if(!confirm('Отменить назначение?')) { this.loading = false; return; }
-                        let res = await fetch('{{ route('tutors.matrix.unassign') }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                            body: JSON.stringify({ task_id: taskId, student_id: studentId })
-                        });
-                        let data = await res.json();
-                        if(data.success) {
-                            this.status = '';
-                            this.assignmentId = null;
-                        } else {
-                            alert(data.message);
-                        }
+                    } catch (error) {
+                        alert('Произошла ошибка при сохранении: ' + error.message);
+                        console.error(error);
+                    } finally {
+                        // Блок finally выполнится В ЛЮБОМ СЛУЧАЕ, крутилка точно исчезнет
+                        this.loading = false;
                     }
-                    this.loading = false;
                 }
             }));
         })

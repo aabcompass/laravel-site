@@ -94,10 +94,14 @@ class TutorMatrixController extends Controller
             ['assigner_id' => auth()->id(), 'status' => 'assigned', 'assigned_at' => now()]
         );
 
-        // ДОБАВЛЯЕМ ЭТОТ БЛОК:
         if ($assignment->wasRecentlyCreated) {
             $assignment->load(['task', 'student']);
-            $assignment->student->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'assigned'));
+            try {
+                $assignment->student->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'assigned'));
+            } catch (\Exception $e) {
+                // Если Telegram упал, мы просто пишем причину в лог, но не прерываем работу сайта!
+                \Illuminate\Support\Facades\Log::error("Ошибка Telegram (Matrix Assign): " . $e->getMessage());
+            }
         }
 
         return response()->json(['success' => true, 'assignment_id' => $assignment->id]);
