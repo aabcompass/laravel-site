@@ -92,9 +92,12 @@ class StudentAssignmentController extends Controller
 
         $assignment->load(['task', 'student', 'assigner']);
         if ($assignment->assigner) {
-            $assignment->assigner->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'submitted'));
+            try {
+                $assignment->assigner->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'submitted'));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Ошибка Telegram (Student Submit): " . $e->getMessage());
+            }
         }
-
 
         return back()->with('success', 'Решение успешно отправлено на проверку!');
     }
