@@ -46,6 +46,12 @@ class TelegramAssignmentNotification extends Notification
             $message->content("🔔 <b>Новое задание!</b>\n\nЗадача №{$this->assignment->task_id}: \"{$taskPreview}\"")
                     ->button('Перейти к решению', $url);
         } 
+        elseif ($this->type === 'self_assigned') {
+            $url = url("/tutors/matrix"); // Ведем учителя в матрицу
+            $studentName = "{$this->assignment->student->last_name} {$this->assignment->student->first_name}";
+            $message->content("🚀 <b>Инициатива ученика!</b>\n\nУченик <b>{$studentName}</b> самостоятельно взял доп. задачу!\nЗадача №{$this->assignment->task_id}: \"{$taskPreview}\"")
+                    ->button('Открыть матрицу', $url);
+        }
         elseif ($this->type === 'submitted') {
             $url = url("/assignments/review/{$this->assignment->id}");
             $studentName = "{$this->assignment->student->last_name} {$this->assignment->student->first_name}";

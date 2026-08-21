@@ -23,9 +23,32 @@
 
             @forelse($variantTasks as $task)
                 <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden border border-gray-200">
-                    <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center">
-                        <span class="font-bold text-gray-800">Задача №{{ $task->id }}</span>
-                        <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Сложность: {{ $task->complexity }}</span>
+                    <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center flex-wrap gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-gray-800">Задача №{{ $task->id }}</span>
+                            <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Сложн: {{ $task->complexity }}</span>
+                        </div>
+                        
+                        <!-- БЛОК САМОНАЗНАЧЕНИЯ -->
+                        <div>
+                            @if(in_array($task->id, $alreadyAssignedTaskIds))
+                                <!-- Если уже назначена -->
+                                <span class="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded border border-green-200">
+                                    ✓ Добавлена в ваши задания
+                                </span>
+                            @elseif($task->canBeSelfAssigned($task->pivot->is_self_assignable))
+                                <!-- Если разрешено брать -->
+                                <form action="{{ route('student.selfAssign', [$variant->id, $task->id]) }}" method="POST" class="m-0">
+                                    @csrf
+                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-1.5 px-4 rounded shadow transition transform hover:scale-105">
+                                        + Взять в проработку
+                                    </button>
+                                </form>
+                            @else
+                                <!-- Если запрещено -->
+                                <span class="text-sm text-gray-400 italic">Только для чтения</span>
+                            @endif
+                        </div>
                     </div>
                     
                     <div class="p-6 text-gray-800 text-base leading-relaxed">

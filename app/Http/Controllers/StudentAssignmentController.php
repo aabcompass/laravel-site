@@ -296,25 +296,73 @@ class StudentAssignmentController extends Controller
         return view('assignments.progress', compact('topicsTree', 'stats'));
     }
 
-    /**
-     * Просмотр варианта работы учеником
-     */
     public function showVariant(\App\Models\WorkVariant $variant)
     {
         $student = auth()->user();
 
-        // Защита: Убеждаемся, что вариант действительно выдан группе этого ученика
         $isAssignedToStudentGroup = \App\Models\AssignmentHistory::where('work_variant_id', $variant->id)
                                         ->where('group_id', $student->group_id)
                                         ->exists();
 
-        if (!$isAssignedToStudentGroup) {
-            abort(403, 'Доступ запрещен. Этот вариант не назначен вашей группе.');
-        }
+        if (!$isAssignedToStudentGroup) abort(403, 'Доступ запрещен.');
 
-        // Получаем задачи варианта (вместе с картинками условий)
         $variantTasks = $variant->tasks()->with('taskImages')->get();
 
-        return view('assignments.variant', compact('variant', 'variantTasks'));
+        // ДОБАВЛЯЕМ: Получаем ID задач, которые ученику уже назначены
+        $alreadyAssignedTaskIds = \App\Models\StudentAssignment::where('student_id', $student->id)
+            ->whereIn('task_id', $variantTasks->pluck('id'))
+            ->pluck('task_id')->toArray();
+
+        return view('assignments.variant', compact('variant', 'variantTasks', 'alreadyAssignedTaskIds'));
+    }
+
+    /**
+     * Ученик сам берет задачу из варианта
+     */
+    public function selfAssign(\App\Models\WorkVariant $variant, \App\Models\Task $task)
+    {
+        $student = auth()->user();
+
+        // 1. Проверяем, выдан ли вариант группе
+        $history = \App\Models\AssignmentHistory::where('work_variant_id', $variant->id)
+            ->where('group_id', $student->group_id)
+            ->first();
+
+        if (!$history) abort(403);
+
+        // 2. Проверяем, разрешено ли брать эту задачу (через pivot)
+        $variantTask = $variant->tasks()->where('task_id', $task->id)->first();
+        if (!$variantTask || !$variantTask->canBeSelfAssigned($variantTask->pivot->is_self_assignable)) {
+            return back()->with('error', 'Эту задачу нельзя взять для самостоятельного решения.');
+        }
+
+        // 3. Проверяем, не взята ли она уже
+        $exists = \App\Models\StudentAssignment::where('student_id', $student->id)->where('task_id', $task->id)->exists();
+        if ($exists) {
+            return back()->with('error', 'Эта задача вам уже назначена.');
+        }
+
+        // 4. Создаем назначение! (В качестве assigner_id пишем учителя, который выдал вариант)
+        $assignment = \App\Models\StudentAssignment::create([
+            'task_id' => $task->id,
+            'student_id' => $student->id,
+            'assigner_id' => $history->teacher_id, 
+            'status' => 'assigned',
+            'assigned_at' => now(),
+            'is_self_assigned' => true // Ставим наш флажок!
+        ]);
+
+        // 5. Уведомляем учителя в Телеграм
+        if ($assignment->assigner) {
+            try {
+                $assignment->load(['task', 'student']);
+                $assignment->assigner->notify(new \App\Notifications\TelegramAssignmentNotification($assignment, 'self_assigned'));
+            } catch (\Exception $e) {
+                // Если Telegram "висит" или выдает ошибку, пишем в лог и идем дальше!
+                \Illuminate\Support\Facades\Log::error("Ошибка Telegram (Self Assign): " . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', 'Отлично! Задача добавлена в ваш список (Мои задания).');
     }
 }
