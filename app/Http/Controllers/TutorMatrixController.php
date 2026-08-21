@@ -17,12 +17,11 @@ class TutorMatrixController extends Controller
     {
         $teacher = auth()->user();
         
-        // Получаем подопечных этого учителя
         $students = $teacher->tutoredStudents()->orderBy('last_name')->get();
 
-        // Формируем запрос для задач
         $query = Task::query()->with(['topic', 'taskImages']);
 
+        // Базовые фильтры
         $query->when($request->topic_id, fn($q, $v) => $q->where('topic_id', $v));
         $query->when($request->source_id, fn($q, $v) => $q->where('source_id', $v));
         $query->when($request->search, function($q, $v) {
@@ -33,15 +32,37 @@ class TutorMatrixController extends Controller
             }
         });
 
-        // Берем по 100 задач на страницу, чтобы матрица была плотной
+        // НОВЫЕ ФИЛЬТРЫ: Статус и Показать все задачи
+        $showAllTasks = $request->boolean('show_all_tasks');
+        $statusFilter = $request->status;
+
+        // Если НЕ стоит галочка "Показать все", то фильтруем задачи:
+        // оставляем только те, которые назначены хотя бы одному из наших учеников.
+        if (!$showAllTasks) {
+            $query->whereIn('id', function($q) use ($students) {
+                $q->select('task_id')
+                  ->from('Student_Assignments')
+                  ->whereIn('student_id', $students->pluck('id'));
+            });
+        }
+
+        // Если выбран статус, жестко фильтруем строки:
+        if ($statusFilter) {
+            $query->whereIn('id', function($q) use ($students, $statusFilter) {
+                $q->select('task_id')
+                  ->from('Student_Assignments')
+                  ->whereIn('student_id', $students->pluck('id'))
+                  ->where('status', $statusFilter);
+            });
+        }
+
         $tasks = $query->orderBy('id', 'desc')->paginate(100)->withQueryString();
 
-        // Получаем все назначения для этих учеников И этих задач (чтобы не грузить лишнее)
+        // Собираем матрицу
         $assignments = StudentAssignment::whereIn('student_id', $students->pluck('id'))
             ->whereIn('task_id', $tasks->pluck('id'))
             ->get();
 
-        // Собираем быструю матрицу в памяти: $matrix[task_id][student_id] = Assignment
         $matrix = [];
         foreach ($assignments as $assignment) {
             $matrix[$assignment->task_id][$assignment->student_id] = $assignment;

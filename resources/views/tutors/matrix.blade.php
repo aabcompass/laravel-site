@@ -75,27 +75,50 @@
                 
                 <!-- ФИЛЬТРЫ -->
                 <form method="GET" action="{{ route('tutors.matrix') }}" class="bg-white p-4 rounded-lg shadow-sm border mb-4 flex flex-wrap gap-4 items-end text-sm">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block font-medium text-gray-700 mb-1">Поиск по тексту или №</label>
-                        <input type="text" name="search" value="{{ request('search') }}" class="w-full border-gray-300 rounded shadow-sm py-1.5">
+                    
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block font-medium text-gray-700 mb-1">Поиск</label>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Текст или №..." class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500">
                     </div>
-                    <div class="flex-1 min-w-[200px]">
+                    
+                    <div class="flex-1 min-w-[150px]">
                         <label class="block font-medium text-gray-700 mb-1">Тема</label>
-                        <select name="topic_id" class="w-full border-gray-300 rounded shadow-sm py-1.5">
+                        <select name="topic_id" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500">
                             <option value="">-- Все темы --</option>
                             @include('topics.options', ['topics' => $topics, 'level' => 0, 'selectedId' => request('topic_id'), 'currentId' => null])
                         </select>
                     </div>
-                    <div class="flex-1 min-w-[200px]">
+                    
+                    <div class="flex-1 min-w-[150px]">
                         <label class="block font-medium text-gray-700 mb-1">Источник</label>
-                        <select name="source_id" class="w-full border-gray-300 rounded shadow-sm py-1.5">
+                        <select name="source_id" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500">
                             <option value="">-- Все источники --</option>
                             @include('topics.options', ['topics' => $sources, 'level' => 0, 'selectedId' => request('source_id'), 'currentId' => null])
                         </select>
                     </div>
+
+                    <!-- НОВЫЙ ФИЛЬТР ПО СТАТУСУ -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block font-medium text-gray-700 mb-1">Статус ученика</label>
+                        <select name="status" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500">
+                            <option value="">-- Любой статус --</option>
+                            <option value="assigned" {{ request('status') == 'assigned' ? 'selected' : '' }}>Назначено</option>
+                            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>В работе</option>
+                            <option value="submitted" {{ request('status') == 'submitted' ? 'selected' : '' }}>На проверке</option>
+                            <option value="revision_needed" {{ request('status') == 'revision_needed' ? 'selected' : '' }}>На доработке</option>
+                            <option value="accepted" {{ request('status') == 'accepted' ? 'selected' : '' }}>Принято</option>
+                        </select>
+                    </div>
+
+                    <!-- ГАЛОЧКА "ПОКАЗАТЬ ВСЕ ЗАДАЧИ" -->
+                    <div class="flex items-center gap-2 mb-2 min-w-[160px]">
+                        <input type="checkbox" name="show_all_tasks" value="1" id="show_all_tasks" {{ request('show_all_tasks') ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                        <label for="show_all_tasks" class="font-medium text-gray-700 cursor-pointer select-none">Показать все задачи</label>
+                    </div>
+
                     <div class="flex gap-2 pb-0.5">
-                        <button type="submit" class="bg-gray-800 text-white rounded px-4 py-1.5 hover:bg-gray-700 shadow">Фильтровать</button>
-                        <a href="{{ route('tutors.matrix') }}" class="bg-gray-200 text-gray-700 rounded px-4 py-1.5 hover:bg-gray-300 shadow">Сброс</a>
+                        <button type="submit" class="bg-gray-800 text-white rounded px-4 py-1.5 hover:bg-gray-700 shadow transition-colors">Применить</button>
+                        <a href="{{ route('tutors.matrix') }}" class="bg-gray-200 text-gray-700 rounded px-4 py-1.5 hover:bg-gray-300 shadow transition-colors">Сброс</a>
                     </div>
                 </form>
 
