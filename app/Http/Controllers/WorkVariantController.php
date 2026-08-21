@@ -343,4 +343,23 @@ class WorkVariantController extends Controller
 
         return back()->with('success', 'Выдача варианта отменена.');
     }
+
+    // --- УДАЛЕНИЕ ВАРИАНТА ---
+    public function destroy(WorkVariant $variant)
+    {
+        // 1. Проверяем права (Только автор или админ)
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403, 'Удалить вариант может только его автор или администратор.');
+        }
+
+        // 2. Проверяем бизнес-логику (Нельзя удалить выданный вариант)
+        if ($variant->isAssigned()) {
+            return back()->with('error', 'Нельзя удалить вариант, так как он уже выдан ученикам.');
+        }
+
+        // 3. Удаляем. (Задачи из варианта открепятся автоматически благодаря ON DELETE CASCADE в базе)
+        $variant->delete();
+
+        return back()->with('success', 'Вариант успешно удален.');
+    }
 }

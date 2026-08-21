@@ -138,6 +138,16 @@
                                                         {{ $variant->is_archived ? '⤴ Разархивировать' : '⤵ В архив' }}
                                                     </button>
                                                 </form>
+
+                                                <!-- УДАЛЕНИЕ ВАРИАНТА -->
+                                                @if($isAssigned)
+                                                    <div class="px-4 py-2 text-sm text-gray-400 cursor-not-allowed bg-gray-50 border-t" title="Нельзя удалить: вариант уже выдан">🗑 Удалить</div>
+                                                @else
+                                                    <form action="{{ route('variants.destroy', $variant->id) }}" method="POST" onsubmit="return confirm('Точно удалить этот вариант? Действие необратимо.')">
+                                                        @csrf @method('DELETE')
+                                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t">🗑 Удалить</button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>
