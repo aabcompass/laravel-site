@@ -131,6 +131,11 @@
                                                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⧉ Клонировать (Себе)</button>
                                             </form>
 
+                                            @if($variant->public_hash)
+                                                <a href="{{ route('public.variant', $variant->public_hash) }}" target="_blank" class="block px-4 py-2 text-sm text-indigo-600 font-bold hover:bg-indigo-50">🔗 Публичная ссылка</a>
+                                            @endif
+
+
                                             @if($isAuthorOrAdmin)
                                                 <form action="{{ route('variants.archive', $variant->id) }}" method="POST">
                                                     @csrf @method('PATCH')

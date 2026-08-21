@@ -4,21 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class GroupController extends Controller
 {
-    public function index()
-    {
-        // Получаем все группы, сразу считаем количество учеников в каждой
-        // Сортируем сначала по классу (grade), потом по названию
-        $groups = Group::withCount('students')
-                       ->orderBy('grade')
-                       ->orderBy('name')
-                       ->get();
-
-        return view('groups.index', compact('groups'));
-    }
-
     public function create()
     {
         return view('groups.edit'); // Будем использовать один шаблон для create и edit
@@ -71,4 +60,18 @@ class GroupController extends Controller
             'description' => ['nullable', 'string'],
         ];
     }
+
+    public function index()
+    {
+        // ЗАПЛАТКА: Генерируем хэши для старых групп, если их нет
+        $groupsWithoutHash = Group::whereNull('public_hash')->orWhere('public_hash', '')->get();
+        foreach ($groupsWithoutHash as $g) {
+            $g->update(['public_hash' => Str::random(16)]);
+        }
+
+        // Получаем все группы ... (ваш текущий код)
+        $groups = Group::withCount('students')->orderBy('grade')->orderBy('name')->get();
+
+        return view('groups.index', compact('groups'));
+    }    
 }

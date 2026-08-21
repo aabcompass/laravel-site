@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $variant->work->title ?? 'Работа' }} - {{ $variant->name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } }; </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style> mjx-container svg { display: inline; } mjx-container[jax="SVG"][display="true"] { display: block; margin: 1em 0; } </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased py-8">
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        
+        <div class="bg-white px-6 py-4 rounded-lg shadow-sm border border-gray-200 text-center">
+            <h1 class="font-bold text-2xl text-gray-900">{{ $variant->work->title ?? 'Работа' }}</h1>
+            <h2 class="text-lg text-gray-600 mt-1">{{ $variant->name }}</h2>
+        </div>
+
+        @forelse($variantTasks as $task)
+            <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden border border-gray-200">
+                <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center">
+                    <span class="font-bold text-gray-800">Задача №{{ $task->id }}</span>
+                    <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Сложн: {{ $task->complexity }}</span>
+                </div>
+                
+                <div class="p-6 text-gray-800 text-base leading-relaxed">
+                    {!! nl2br(e($task->task_text)) !!}
+
+                    @if($task->taskImages->count() > 0)
+                        <div class="mt-4 flex flex-wrap gap-4">
+                            @foreach($task->taskImages as $img)
+                                <a href="{{ asset($img->file_path) }}" target="_blank" class="block bg-white p-1 border rounded shadow-sm hover:shadow-md transition">
+                                    <img src="{{ asset($img->file_path) }}" class="object-contain" style="width: {{ $img->scale }}%; min-width: 150px; max-height: 400px;">
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="bg-white p-8 text-center text-gray-500 rounded-lg border shadow-sm">В этом варианте пока нет задач.</div>
+        @endforelse
+
+    </div>
+</body>
+</html>

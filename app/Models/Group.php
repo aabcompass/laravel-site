@@ -3,18 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Group extends Model
 {
     protected $table = 'Groups';
-    public $timestamps = false; // В таблице есть только created_at, Laravel его заполнит сам
+    public $timestamps = false;
 
-    // Разрешаем заполнять новые поля
-    protected $fillable = ['name', 'description', 'grade'];
+    // Добавили public_hash
+    protected $fillable = ['name', 'description', 'grade', 'public_hash'];
 
-    // Связь: В группе много учеников
     public function students()
     {
         return $this->hasMany(User::class, 'group_id');
+    }
+
+    // Авто-генерация хэша при создании НОВОЙ группы
+    protected static function booted()
+    {
+        static::creating(function ($group) {
+            if (empty($group->public_hash)) {
+                $group->public_hash = Str::random(16); // 16 случайных символов
+            }
+        });
     }
 }

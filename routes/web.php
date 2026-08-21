@@ -10,6 +10,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkController;
 use App\Http\Controllers\WorkVariantController;
+use App\Http\Controllers\PublicController; 
 
 
 Route::get('/', function () {
@@ -141,5 +142,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/variants/{variant}', [WorkVariantController::class, 'destroy'])->name('variants.destroy');
     });
 });
+
+Route::get('/v/{hash}', [PublicController::class, 'showVariant'])->name('public.variant');
+Route::get('/g/{hash}', [PublicController::class, 'showGroup'])->name('public.group');
 
 require __DIR__.'/auth.php';

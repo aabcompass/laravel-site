@@ -40,7 +40,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right space-x-3">
                                     <a href="{{ route('groups.edit', $group->id) }}" class="text-blue-500 hover:underline">Изменить</a>
-                                    
+                                    <a href="{{ route('public.group', $group->public_hash) }}" target="_blank" class="text-indigo-500 hover:underline font-bold text-xs bg-indigo-50 px-2 py-1 rounded">Публ. ссылка</a>
                                     @if($group->students_count > 0)
                                         <span class="text-gray-400 cursor-not-allowed" title="В группе есть ученики">Удалить</span>
                                     @else
