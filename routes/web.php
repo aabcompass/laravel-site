@@ -13,6 +13,7 @@ use App\Http\Controllers\WorkVariantController;
 use App\Http\Controllers\PublicController; 
 use App\Http\Controllers\TutorController;
 use App\Http\Controllers\TutorMatrixController;
+use App\Http\Controllers\ReviewController;
 
 
 Route::get('/', function () {
@@ -150,8 +151,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/tutors/matrix', [TutorMatrixController::class, 'index'])->name('tutors.matrix');
         Route::post('/tutors/matrix/assign', [TutorMatrixController::class, 'assign'])->name('tutors.matrix.assign');
         Route::post('/tutors/matrix/unassign', [TutorMatrixController::class, 'unassign'])->name('tutors.matrix.unassign');      
-        // ЗАГЛУШКА для страницы проверки (сделаем её на следующем шаге)
-        Route::get('/assignments/review/{assignment}', function() { return "Страница проверки в разработке"; })->name('assignments.review');
+        // Проверка решений учителем
+        Route::get('/assignments/review/{assignment}', [ReviewController::class, 'show'])->name('assignments.review');
+        Route::put('/assignments/review/{assignment}', [ReviewController::class, 'update'])->name('assignments.review.update');
     });
 });
 
