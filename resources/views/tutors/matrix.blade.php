@@ -2,23 +2,27 @@
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Сводная матрица индивидуальной работы</h2>
     </x-slot>
+
     <!-- Подключаем MathJax -->
     <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } }; </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <style> mjx-container svg { display: inline; } mjx-container[jax="SVG"][display="true"] { display: block; margin: 1em 0; } </style>
 
-    <!-- Подключаем логику Alpine.js для ячеек -->
+    <!-- Логика Alpine.js для ячеек -->
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('matrixCell', (taskId, studentId, initialStatus, mark, assignmentId) => ({
+            // ДОБАВЛЕНО: Передаем isSelfAssigned
+            Alpine.data('matrixCell', (taskId, studentId, initialStatus, mark, assignmentId, isSelfAssigned) => ({
                 status: initialStatus,
                 mark: mark,
                 assignmentId: assignmentId,
+                isSelfAssigned: isSelfAssigned,
                 loading: false,
 
                 async toggle() {
                     if (this.loading) return;
 
+                    // Если работа отправлена, проверена или на доработке -> Переход на страницу проверки
                     if (['submitted', 'revision_needed', 'accepted'].includes(this.status)) {
                         window.location.href = `/assignments/review/${this.assignmentId}`;
                         return;
@@ -31,30 +35,39 @@
                             // НАЗНАЧАЕМ ЗАДАЧУ
                             let res = await fetch('{{ route('tutors.matrix.assign') }}', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
                                 body: JSON.stringify({ task_id: taskId, student_id: studentId })
                             });
                             
-                            // Если сервер вернул ошибку 500, перехватываем её
-                            if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+                            if (!res.ok) throw new Error('Ошибка сети/сервера: ' + res.status);
                             
                             let data = await res.json();
                             if(data.success) {
                                 this.status = 'assigned';
                                 this.assignmentId = data.assignment_id;
+                                this.isSelfAssigned = false; // Назначает учитель, поэтому false
                             } else {
                                 alert(data.message);
                             }
                         } else if (this.status === 'assigned') {
+                            
+                            // ДОБАВЛЕНО: Защита от удаления самоназначенной задачи
+                            if (this.isSelfAssigned) {
+                                alert('Это инициатива ученика (самоназначение). Вы не можете отменить эту задачу из матрицы.');
+                                this.loading = false;
+                                return;
+                            }
+
                             // СНИМАЕМ НАЗНАЧЕНИЕ
-                            if(!confirm('Отменить назначение?')) return;
+                            if(!confirm('Отменить назначение?')) { this.loading = false; return; }
+                            
                             let res = await fetch('{{ route('tutors.matrix.unassign') }}', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
                                 body: JSON.stringify({ task_id: taskId, student_id: studentId })
                             });
                             
-                            if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+                            if (!res.ok) throw new Error('Ошибка сети/сервера: ' + res.status);
                             
                             let data = await res.json();
                             if(data.success) {
@@ -65,10 +78,9 @@
                             }
                         }
                     } catch (error) {
-                        alert('Произошла ошибка при сохранении: ' + error.message);
+                        alert('Произошла ошибка при сохранении. Проверьте консоль браузера.');
                         console.error(error);
                     } finally {
-                        // Блок finally выполнится В ЛЮБОМ СЛУЧАЕ, крутилка точно исчезнет
                         this.loading = false;
                     }
                 }
@@ -110,7 +122,6 @@
                         </select>
                     </div>
 
-                    <!-- НОВЫЙ ФИЛЬТР ПО СТАТУСУ -->
                     <div class="flex-1 min-w-[150px]">
                         <label class="block font-medium text-gray-700 mb-1">Статус ученика</label>
                         <select name="status" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500">
@@ -123,7 +134,6 @@
                         </select>
                     </div>
 
-                    <!-- ГАЛОЧКА "ПОКАЗАТЬ ВСЕ ЗАДАЧИ" -->
                     <div class="flex items-center gap-2 mb-2 min-w-[160px]">
                         <input type="checkbox" name="show_all_tasks" value="1" id="show_all_tasks" {{ request('show_all_tasks') ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
                         <label for="show_all_tasks" class="font-medium text-gray-700 cursor-pointer select-none">Показать все задачи</label>
@@ -135,7 +145,7 @@
                     </div>
                 </form>
 
-                <!-- МАТРИЦА (ТАБЛИЦА С ЗАКРЕПЛЕННЫМИ ШАПКАМИ) -->
+                <!-- МАТРИЦА (ТАБЛИЦА) -->
                 <div class="bg-white border rounded-lg shadow-sm overflow-x-auto overflow-y-auto max-h-[75vh] relative">
                     <table class="w-full text-xs text-center border-collapse">
                         <thead class="bg-gray-100 text-gray-700 uppercase sticky top-0 z-20 shadow-sm">
@@ -164,25 +174,20 @@
                                             </a>
                                         </div>
                                         
-                                        <!-- Вывод текста с LaTeX (без обрезания, либо можете добавить line-clamp-3) -->
                                         <div class="text-gray-700 text-xs leading-relaxed">
                                             {!! nl2br(e($task->task_text)) !!}
                                         </div>
 
                                         <!-- ВЫВОД МИНИАТЮР КАРТИНОК -->
-                                        @if($task->taskImages->count() > 0)
+                                        @if($task->taskImages && $task->taskImages->count() > 0)
                                             <div class="mt-2 flex flex-wrap gap-2">
                                                 @foreach($task->taskImages as $img)
-                                                    <!-- class="... hover:z-50" нужен, чтобы увеличенная картинка перекрывала соседние ячейки -->
                                                     <a href="{{ asset($img->file_path) }}" target="_blank" class="block relative z-10 hover:z-50">
-                                                        <!-- Жестко ограничиваем высоту (h-12 = 48px), убираем style="width:..." -->
-                                                        <!-- hover:scale-[3] увеличит картинку в 3 раза при наведении -->
                                                         <img src="{{ asset($img->file_path) }}" class="h-12 w-auto object-contain border bg-white rounded shadow-sm transition-transform duration-200 hover:scale-[3] origin-left">
                                                     </a>
                                                 @endforeach
                                             </div>
-                                        @endif 
-
+                                        @endif
                                     </td>
 
                                     <!-- Ячейки матрицы -->
@@ -190,19 +195,20 @@
                                         @php
                                             $assign = $matrix[$task->id][$student->id] ?? null;
                                             $status = $assign ? $assign->status : '';
-                                            $mark = $assign ? $assign->mark_percent : '';
+                                            $mark = $assign && $assign->mark_percent !== null ? $assign->mark_percent : '';
                                             $assignmentId = $assign ? $assign->id : 'null';
+                                            // ДОБАВЛЕНО: Проверка самоназначения
+                                            $isSelfAssigned = $assign && $assign->is_self_assigned ? 'true' : 'false';
                                         @endphp
                                         
-                                        <!-- Подключаем компонент AlpineJS -->
-                                        <td class="border-r p-0 relative" x-data="matrixCell({{ $task->id }}, {{ $student->id }}, '{{ $status }}', '{{ $mark }}', {{ $assignmentId }})">
+                                        <td class="border-r p-0 relative" x-data="matrixCell({{ $task->id }}, {{ $student->id }}, '{{ $status }}', '{{ $mark }}', {{ $assignmentId }}, {{ $isSelfAssigned }})">
                                             
-                                            <!-- Индикатор загрузки (крутилка) -->
+                                            <!-- Индикатор загрузки -->
                                             <div x-show="loading" class="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
                                                 <svg class="animate-spin h-5 w-5 text-blue-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                             </div>
 
-                                            <button @click="toggle()" type="button" class="w-full h-full min-h-[40px] px-1 py-2 transition-colors font-bold flex items-center justify-center cursor-pointer"
+                                            <button @click="toggle()" type="button" class="w-full h-full min-h-[44px] px-1 py-2 transition-colors font-bold flex flex-col items-center justify-center cursor-pointer"
                                                 :class="{
                                                     'hover:bg-gray-100': !status,
                                                     'bg-blue-100 text-blue-800 hover:bg-blue-200': status === 'assigned',
@@ -213,19 +219,27 @@
                                                 }"
                                                 :title="
                                                     !status ? 'Кликните, чтобы назначить' :
+                                                    status === 'assigned' && isSelfAssigned ? 'Взято учеником самостоятельно' :
                                                     status === 'assigned' ? 'Назначено (Клик для отмены)' :
                                                     status === 'submitted' ? 'Ждет проверки! (Кликнуть)' :
                                                     status === 'revision_needed' ? 'На доработке (Кликнуть)' :
                                                     'Проверено (Кликнуть)'
                                                 "
                                             >
-                                                <!-- Иконки/Текст в зависимости от статуса -->
-                                                <span x-show="!status" class="text-gray-200 group-hover:text-gray-300">+</span>
-                                                <span x-show="status === 'assigned'">А</span>
-                                                <span x-show="status === 'in_progress'">В</span>
-                                                <span x-show="status === 'submitted'">Проверить!</span>
-                                                <span x-show="status === 'revision_needed'">Дораб.</span>
-                                                <span x-show="status === 'accepted'" x-text="mark ? mark + '%' : 'ОК'"></span>
+                                                <!-- Текст статуса -->
+                                                <div class="flex items-center gap-1">
+                                                    <span x-show="!status" class="text-gray-200 group-hover:text-gray-300">+</span>
+                                                    <span x-show="status === 'assigned'">А</span>
+                                                    <span x-show="status === 'in_progress'">В</span>
+                                                    <span x-show="status === 'submitted'">Проверить!</span>
+                                                    <span x-show="status === 'revision_needed'">Дораб.</span>
+                                                    <span x-show="status === 'accepted'" x-text="mark !== '' ? mark + '%' : 'ОК'"></span>
+                                                    
+                                                    <!-- ДОБАВЛЕНО: Бейджик самоназначения -->
+                                                    <template x-if="isSelfAssigned">
+                                                        <span class="bg-blue-800 text-white text-[9px] px-1 rounded shadow-sm ml-1" title="Инициатива ученика">С</span>
+                                                    </template>
+                                                </div>
                                             </button>
                                         </td>
                                     @endforeach
