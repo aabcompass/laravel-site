@@ -12,6 +12,7 @@ use App\Http\Controllers\WorkController;
 use App\Http\Controllers\WorkVariantController;
 use App\Http\Controllers\PublicController; 
 use App\Http\Controllers\TutorController;
+use App\Http\Controllers\TutorMatrixController;
 
 
 Route::get('/', function () {
@@ -145,6 +146,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/tutors/students', [TutorController::class, 'index'])->name('tutors.index');
         Route::post('/tutors/students', [TutorController::class, 'store'])->name('tutors.store');
         Route::delete('/tutors/students', [TutorController::class, 'destroy'])->name('tutors.destroy');
+        // Матрица индивидуальных назначений
+        Route::get('/tutors/matrix', [TutorMatrixController::class, 'index'])->name('tutors.matrix');
+        Route::post('/tutors/matrix/assign', [TutorMatrixController::class, 'assign'])->name('tutors.matrix.assign');
+        Route::post('/tutors/matrix/unassign', [TutorMatrixController::class, 'unassign'])->name('tutors.matrix.unassign');      
+        // ЗАГЛУШКА для страницы проверки (сделаем её на следующем шаге)
+        Route::get('/assignments/review/{assignment}', function() { return "Страница проверки в разработке"; })->name('assignments.review');
     });
 });
 
