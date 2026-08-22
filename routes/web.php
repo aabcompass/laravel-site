@@ -14,6 +14,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\TutorController;
 use App\Http\Controllers\TutorMatrixController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SystemController;
 
 
 Route::get('/', function () {
@@ -63,7 +64,9 @@ Route::middleware('auth')->group(function () {
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
-
+        // Системные инструменты
+        Route::get('/system/mail-test', [SystemController::class, 'mailTest'])->name('system.mail-test');
+        Route::post('/system/mail-test', [SystemController::class, 'sendMailTest'])->name('system.mail-test.send');
         // Пользователи
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
