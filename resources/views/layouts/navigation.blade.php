@@ -18,6 +18,8 @@
                         Главная
                     </x-nav-link>
 
+                    <x-nav-link :href="route('handbook.index')" :active="request()->routeIs('handbook.*')">Справочник</x-nav-link>
+
                     <!-- ДЛЯ СТУДЕНТОВ: Мой прогресс -->
                     @if(auth()->user()->hasRole('student'))
                         <x-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
@@ -115,6 +117,8 @@
                 Главная
             </x-responsive-nav-link>
 
+            <x-responsive-nav-link :href="route('handbook.index')" :active="request()->routeIs('handbook.*')">Справочник</x-responsive-nav-link>
+
             @if(auth()->user()->hasRole('student'))
                 <x-responsive-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
                     Мой прогресс
@@ -135,7 +139,7 @@
                 <x-responsive-nav-link :href="route('sources.index')" :active="request()->routeIs('sources.*')">Источники</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('groups.index')" :active="request()->routeIs('groups.*')">Учебные группы</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Пользователи</x-responsive-nav-link>
-                @endcan
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

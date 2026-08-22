@@ -15,15 +15,18 @@ use App\Http\Controllers\TutorController;
 use App\Http\Controllers\TutorMatrixController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\HandbookController;
 
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-//Route::get('/dashboard', function () {
-//    return view('dashboard');
-//})->middleware(['auth', 'verified'])->name('dashboard');
+// === ОБЩИЙ СПРАВОЧНИК ===
+Route::get('/handbook', [HandbookController::class, 'index'])->name('handbook.index');
+Route::get('/api/handbook/search', [HandbookController::class, 'search']);
+Route::get('/api/handbook/substance/{id}', [HandbookController::class, 'getSubstance']);
+
 
 Route::get('/my_assignments.php', function (\Illuminate\Http\Request $request) {
     $token = $request->query('token');
