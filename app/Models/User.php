@@ -101,4 +101,15 @@ class User extends Authenticatable
     {
         return $this->telegram_chat_id;
     }
+
+    // Авто-генерация auth_token при создании нового пользователя
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            if (empty($user->auth_token)) {
+                // Генерируем 40 символов (как в вашей старой базе)
+                $user->auth_token = bin2hex(random_bytes(20)); 
+            }
+        });
+    }
 }

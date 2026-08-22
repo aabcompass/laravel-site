@@ -135,4 +135,30 @@ class UserController extends Controller
 
         return back()->with('success', "Группа для ученика {$user->last_name} {$user->first_name} успешно изменена.");
     }
+
+    /**
+     * Страница массовой печати QR-кодов
+     */
+    public function printQr(Request $request)
+    {
+        $query = User::with('group')->orderBy('last_name')->orderBy('first_name');
+
+        // Применяем те же фильтры, что и в списке
+        $query->when($request->role_id, function ($q, $v) {
+            $q->whereHas('roles', fn($q2) => $q2->where('Roles.id', $v));
+        });
+
+        $query->when($request->group_id, fn($q, $v) => $q->where('group_id', $v));
+
+        $users = $query->get(); // Забираем всех подходящих, без пагинации
+
+        // Заплатка: если у кого-то из старых юзеров нет токена - сгенерируем на лету
+        foreach ($users as $user) {
+            if (empty($user->auth_token)) {
+                $user->update(['auth_token' => bin2hex(random_bytes(20))]);
+            }
+        }
+
+        return view('users.print-qr', compact('users'));
+    }
 }

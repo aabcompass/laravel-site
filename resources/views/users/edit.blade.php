@@ -72,6 +72,18 @@
                     </div>
                 </form>
 
+                @if(isset($user))
+                <div class="mt-8 pt-6 border-t flex items-center gap-6">
+                    <div>
+                        {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(100)->generate(url('/my_assignments.php?token=' . $user->auth_token)) !!}
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Ссылка для входа без пароля</h3>
+                        <input type="text" readonly value="{{ url('/my_assignments.php?token=' . $user->auth_token) }}" class="mt-1 border-gray-300 bg-gray-50 text-xs rounded w-full lg:w-96" onclick="this.select();">
+                    </div>
+                </div>
+                @endif
+
             </div>
         </div>
     </div>

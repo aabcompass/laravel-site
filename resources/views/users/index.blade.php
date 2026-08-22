@@ -36,9 +36,14 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="flex gap-2">
+                 <div class="flex gap-2">
                     <button type="submit" class="bg-gray-800 text-white rounded px-4 py-1.5 text-sm hover:bg-gray-700">Найти</button>
                     <a href="{{ route('users.index') }}" class="bg-gray-200 text-gray-700 rounded px-4 py-1.5 text-sm hover:bg-gray-300">Сброс</a>
+                    
+                    <!-- КНОПКА ПЕЧАТИ QR -->
+                    <button type="submit" formaction="{{ route('users.printQr') }}" formtarget="_blank" class="bg-indigo-600 text-white rounded px-4 py-1.5 text-sm hover:bg-indigo-700 shadow-sm flex items-center gap-1">
+                        🖨 Печать QR
+                    </button>
                 </div>
             </form>
 
