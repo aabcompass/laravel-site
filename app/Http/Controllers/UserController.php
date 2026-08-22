@@ -6,8 +6,10 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Group;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+
 
 class UserController extends Controller
 {
@@ -160,5 +162,74 @@ class UserController extends Controller
         }
 
         return view('users.print-qr', compact('users'));
+    }   
+
+    /**
+     * Страница массового добавления пользователей
+     */
+    public function bulkCreate()
+    {
+        $groups = Group::orderBy('grade')->orderBy('name')->get();
+        return view('users.bulk', compact('groups'));
+    }
+
+    /**
+     * Обработка массового сохранения
+     */
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'group_id' => 'required|exists:Groups,id',
+            'students' => 'required|array',
+            'students.*.last_name' => 'required|string|max:100',
+            'students.*.first_name' => 'required|string|max:100',
+        ]);
+
+        // Ищем роль advanced_student. Если её вдруг нет, берем ID 1 (student)
+        $role = Role::where('name', 'advanced_student')->first();
+        $roleId = $role ? $role->id : 1; 
+
+        $addedCount = 0;
+        $skippedCount = 0;
+
+        foreach ($request->students as $st) {
+            // Проверка на дубликат (Фамилия + Имя + Группа)
+            $exists = User::where('last_name', $st['last_name'])
+                          ->where('first_name', $st['first_name'])
+                          ->where('group_id', $request->group_id)
+                          ->exists();
+
+            if ($exists) {
+                $skippedCount++;
+                continue;
+            }
+
+            // Генерируем случайный уникальный email и пароль
+            $randomString = Str::random(8);
+            $email = "student_{$randomString}@phys408.local";
+            $password = Hash::make(Str::random(12));
+
+            $user = User::create([
+                'email' => $email,
+                'password_hash' => $password,
+                'last_name' => $st['last_name'],
+                'first_name' => $st['first_name'],
+                'group_id' => $request->group_id,
+            ]);
+
+            // Привязываем роль
+            $user->roles()->sync([$roleId]);
+            
+            // auth_token сгенерируется автоматически благодаря нашему методу booted() в модели User
+
+            $addedCount++;
+        }
+
+        $message = "Массовое добавление завершено. Добавлено новых учеников: {$addedCount}.";
+        if ($skippedCount > 0) {
+            $message .= " Пропущено дубликатов: {$skippedCount}.";
+        }
+
+        return redirect()->route('users.index')->with('success', $message);
     }
 }
