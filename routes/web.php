@@ -16,12 +16,9 @@ use App\Http\Controllers\TutorMatrixController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\HandbookController;
+use App\Http\Controllers\SubstanceController;
 
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
+Route::get('/', [\App\Http\Controllers\HandbookController::class, 'index'])->name('home');
 // === ОБЩИЙ СПРАВОЧНИК ===
 Route::get('/handbook', [HandbookController::class, 'index'])->name('handbook.index');
 Route::get('/api/handbook/search', [HandbookController::class, 'search']);
@@ -67,6 +64,8 @@ Route::middleware('auth')->group(function () {
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
+        // Редактор веществ (Справочник)
+        Route::resource('substances', SubstanceController::class)->except(['show']);
         // Системные инструменты
         Route::get('/system/mail-test', [SystemController::class, 'mailTest'])->name('system.mail-test');
         Route::post('/system/mail-test', [SystemController::class, 'sendMailTest'])->name('system.mail-test.send');
