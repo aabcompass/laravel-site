@@ -21,7 +21,7 @@
                     <x-nav-link :href="route('handbook.index')" :active="request()->routeIs('handbook.*')">Справочник</x-nav-link>
 
                     <!-- ДЛЯ СТУДЕНТОВ: Мой прогресс -->
-                    @if(auth()->user()->hasRole('student'))
+                    @if(auth()->user()->hasRole('advanced_student'))
                         <x-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
                             Мой прогресс
                         </x-nav-link>
@@ -119,7 +119,7 @@
 
             <x-responsive-nav-link :href="route('handbook.index')" :active="request()->routeIs('handbook.*')">Справочник</x-responsive-nav-link>
 
-            @if(auth()->user()->hasRole('student'))
+            @if(auth()->user()->hasRole('advanced_student'))
                 <x-responsive-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
                     Мой прогресс
                 </x-responsive-nav-link>
