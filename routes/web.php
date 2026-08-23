@@ -18,6 +18,7 @@ use App\Http\Controllers\SystemController;
 use App\Http\Controllers\HandbookController;
 use App\Http\Controllers\SubstanceController;
 
+
 Route::get('/', [\App\Http\Controllers\HandbookController::class, 'index'])->name('home');
 // === ОБЩИЙ СПРАВОЧНИК ===
 Route::get('/handbook', [HandbookController::class, 'index'])->name('handbook.index');
