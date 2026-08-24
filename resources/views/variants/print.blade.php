@@ -7,7 +7,7 @@
     <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } }; </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    <style>
+<style>
         body { 
             font-family: 'Times New Roman', Times, serif; 
             color: #000; margin: 0; padding: 0; background: #fff;
@@ -41,22 +41,32 @@
         /* Линия отреза */
         .cut-line { 
             border-top: 1px dashed #999; 
-            margin: 20px 0; 
+            margin: 30px 0; 
             position: relative; 
-            page-break-after: always;
+            /* УБРАЛИ жесткий разрыв страницы отсюда */
         }
-        .cut-line::before { content: "✂"; position: absolute; top: -10px; left: -20px; font-size: 16px; color: #666; }
+        .cut-line::before { 
+            content: "✂"; position: absolute; top: -14px; left: -20px; 
+            font-size: 20px; color: #666; background: #fff; padding: 0 5px; 
+        }
 
         /* СПЕЦИАЛЬНЫЙ CSS ДЛЯ ПРИНТЕРА */
         @media print {
+            /* Уменьшаем дефолтные отступы принтера, чтобы влезло больше текста */
+            @page { margin: 1cm; }
+            
             body { background: transparent; }
             .wrapper { max-width: none; width: 100%; margin: 0; }
             
+            /* Запрещаем разрывать сам вариант посередине, если он помещается на лист */
+            .instance { page-break-inside: avoid; }
+            
             @if($variant->print_copies_per_page == 2)
-                .print-grid { display: grid; grid-template-rows: 1fr 1fr; height: 100vh; }
-                .cut-line { page-break-after: auto; }
+                /* Для 2-х экземпляров отключаем Grid, они просто встанут друг под другом */
+                .print-grid { display: block; }
             @elseif($variant->print_copies_per_page == 4)
-                .print-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; height: 100vh; }
+                /* Для 4-х используем колонки */
+                .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
                 .cut-line { display: none; }
             @endif
         }
