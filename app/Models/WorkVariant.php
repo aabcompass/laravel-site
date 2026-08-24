@@ -14,7 +14,8 @@ class WorkVariant extends Model
         'public_hash', 'version', 'is_archived', 'parent_id', 'author_id',
         // НОВЫЕ ПОЛЯ:
         'teacher_comment', 'print_instructions', 'print_font_size', 
-        'print_spacing_lines', 'print_copies_per_page', 'print_show_name_field'
+        'print_spacing_lines', 'print_copies_per_page', 'print_show_name_field',
+        'print_show_task_id', 'print_show_complexity'
     ];
 
     public function work() { return $this->belongsTo(Work::class, 'work_id'); }

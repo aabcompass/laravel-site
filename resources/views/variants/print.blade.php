@@ -92,7 +92,17 @@
             <!-- Список задач -->
             @foreach($variantTasks as $task)
                 <div class="task">
-                    <span class="task-number">{{ $loop->iteration }}.</span>
+                    <span class="task-number">
+                        {{ $loop->iteration }}.
+                        @if($variant->print_show_task_id || $variant->print_show_complexity)
+                            (@php
+                                $meta = [];
+                                if ($variant->print_show_task_id) $meta[] = $task->id;
+                                if ($variant->print_show_complexity) $meta[] = '💡  ' . $task->complexity;
+                                echo implode(', ', $meta);
+                            @endphp)
+                        @endif
+                    </span>
                     <span class="task-text">{!! nl2br(e($task->task_text)) !!}</span>
                     
                     @if($task->taskImages->count() > 0)

@@ -65,8 +65,26 @@
 
                             <div>
                                 <label class="flex items-center gap-2 cursor-pointer mt-4">
-                                    <input type="checkbox" name="print_show_name_field" value="1" {{ $variant->print_show_name_field ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-5 h-5">
-                                    <span class="font-medium text-sm text-gray-700">Печатать поле "Фамилия Имя: _______________"</span>
+                                    <div>
+                                        <label class="flex items-center gap-2 cursor-pointer mt-4">
+                                            <input type="checkbox" name="print_show_name_field" value="1" {{ $variant->print_show_name_field ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-5 h-5">
+                                            <span class="font-medium text-sm text-gray-700">Печатать поле "Фамилия Имя: _______________"</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- НОВЫЕ ГАЛОЧКИ -->
+                                    <div>
+                                        <label class="flex items-center gap-2 cursor-pointer mt-2">
+                                            <input type="checkbox" name="print_show_task_id" value="1" {{ $variant->print_show_task_id ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-5 h-5">
+                                            <span class="font-medium text-sm text-gray-700">Печатать номер задачи (ID из базы)</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label class="flex items-center gap-2 cursor-pointer mt-2">
+                                            <input type="checkbox" name="print_show_complexity" value="1" {{ $variant->print_show_complexity ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500 w-5 h-5">
+                                            <span class="font-medium text-sm text-gray-700">Печатать сложность задачи</span>
+                                        </label>
+                                    </div>
                                 </label>
                             </div>
                         </div>

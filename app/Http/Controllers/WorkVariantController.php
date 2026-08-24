@@ -264,17 +264,21 @@ class WorkVariantController extends Controller
     {
         if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
 
-        $data = $request->validate([
+            $data = $request->validate([
             'teacher_comment' => 'nullable|string',
             'print_instructions' => 'nullable|string',
             'print_font_size' => 'required|integer|min:8|max:24',
             'print_spacing_lines' => 'required|integer|min:0|max:10',
             'print_copies_per_page' => 'required|in:1,2,4',
             'print_show_name_field' => 'nullable|boolean',
+            'print_show_task_id' => 'nullable|boolean',
+            'print_show_complexity' => 'nullable|boolean',
         ]);
 
-        // Чекбоксы в HTML не отправляются, если не отмечены, поэтому принудительно ставим false
+        // Чекбоксы HTML не передаются, если не отмечены, поэтому конвертируем их принудительно
         $data['print_show_name_field'] = $request->has('print_show_name_field');
+        $data['print_show_task_id'] = $request->has('print_show_task_id');
+        $data['print_show_complexity'] = $request->has('print_show_complexity');
 
         $variant->update($data);
 
