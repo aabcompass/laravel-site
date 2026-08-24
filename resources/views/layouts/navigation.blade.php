@@ -54,6 +54,7 @@
                                         <x-dropdown-link :href="route('groups.index')">Учебные группы</x-dropdown-link>
                                         <x-dropdown-link :href="route('users.index')">Пользователи</x-dropdown-link>
                                         <x-dropdown-link :href="route('substances.index')">Свойства веществ</x-dropdown-link>
+                                        <x-dropdown-link :href="route('rewards.index')">Каталог наград</x-dropdown-link>
                                     </x-slot>
                                 </x-dropdown>
                             </div>
@@ -134,6 +135,7 @@
                     <x-responsive-nav-link :href="route('groups.index')">Учебные группы</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('users.index')">Пользователи</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('substances.index')">Свойства веществ</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('rewards.index')">Каталог наград</x-responsive-nav-link>
                 @endcan
             @endauth
         </div>

@@ -17,6 +17,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\HandbookController;
 use App\Http\Controllers\SubstanceController;
+use App\Http\Controllers\RewardController;
 
 
 Route::get('/', [\App\Http\Controllers\HandbookController::class, 'index'])->name('home');
@@ -105,6 +106,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/sources/{source}', [SourceController::class, 'update'])->name('sources.update');
         Route::patch('/sources/{source}/move/{direction}', [SourceController::class, 'move'])->name('sources.move');
         Route::delete('/sources/{source}', [SourceController::class, 'destroy'])->name('sources.destroy');
+        // Каталог наград
+        Route::resource('rewards', RewardController::class)->except(['show']);
+
         Route::get('/login-as/{user}', function (\App\Models\User $user) {
         // Защита: только админы или авторы могут использовать эту фичу
             if (!auth()->user()->hasAnyRole(['admin', 'author', 'teacher'])) {
