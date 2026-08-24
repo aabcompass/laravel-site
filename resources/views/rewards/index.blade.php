@@ -30,10 +30,13 @@
                         @forelse ($rewards as $reward)
                             <tr class="bg-white border-b hover:bg-indigo-50 transition">
                                 <td class="px-6 py-3 text-center">
-                                    @if($reward->image_path)
-                                        <img src="{{ asset($reward->image_path) }}" class="h-10 w-10 object-contain bg-gray-900 rounded inline-block shadow-sm">
+                                    @if($reward->svg_content)
+                                        <!-- Классы [&>svg]:... заставляют любую вставленную SVG-картинку масштабироваться под размер блока -->
+                                        <div class="h-12 w-12 bg-gray-900 rounded inline-flex items-center justify-center shadow-sm [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain p-1">
+                                            {!! $reward->svg_content !!}
+                                        </div>
                                     @else
-                                        <div class="h-10 w-10 bg-gray-100 rounded inline-flex items-center justify-center text-gray-400 border text-xs">Нет</div>
+                                        <div class="h-12 w-12 bg-gray-100 rounded inline-flex items-center justify-center text-gray-400 border text-xs">Нет</div>
                                     @endif
                                 </td>
                                 

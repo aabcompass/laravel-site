@@ -92,15 +92,17 @@
                     <div class="space-y-6">
                         
                         <div class="bg-white shadow sm:rounded-lg p-6 border">
-                            <h3 class="text-lg font-bold border-b pb-2 mb-4">Визуал (Карточка SVG/PNG)</h3>
+                            <h3 class="text-lg font-bold border-b pb-2 mb-4">Визуал (Код SVG)</h3>
                             
-                            @if(isset($reward) && $reward->image_path)
-                                <div class="mb-4 bg-gray-900 p-4 rounded-lg flex justify-center">
-                                    <img src="{{ asset($reward->image_path) }}" class="max-h-64 object-contain shadow-lg rounded">
+                            @if(isset($reward) && $reward->svg_content)
+                                <div class="mb-4 bg-gray-900 p-4 rounded-lg flex justify-center items-center h-48 [&>svg]:w-auto [&>svg]:h-full">
+                                    {!! $reward->svg_content !!}
                                 </div>
                             @endif
 
-                            <input type="file" name="image" accept=".svg,.png,.jpg,.jpeg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <label class="block font-bold text-sm text-gray-700 mb-1">Вставьте код SVG изображения:</label>
+                            <div class="text-xs text-gray-500 mb-2">Откройте .svg файл в блокноте и скопируйте весь текст, начиная с <code>&lt;svg...&gt;</code></div>
+                            <textarea name="svg_content" rows="6" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 font-mono text-xs">{{ old('svg_content', $reward->svg_content ?? '') }}</textarea>
                         </div>
 
                         <div class="bg-white shadow sm:rounded-lg p-6 border">

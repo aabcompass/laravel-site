@@ -9,7 +9,7 @@ class Reward extends Model
     protected $table = 'Rewards';
 
     protected $fillable = [
-        'key', 'name', 'symbol_latex', 'image_path',
+        'key', 'name', 'symbol_latex', 'svg_content',
         'physical_desc', 'public_desc', 'private_desc', 'perks',
         'is_for_answer', 'carrier_type', 'requires_registration',
         'z_number', 'a_number'
