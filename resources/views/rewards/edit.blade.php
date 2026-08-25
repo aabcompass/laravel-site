@@ -95,7 +95,7 @@
                             <h3 class="text-lg font-bold border-b pb-2 mb-4">Визуал (Код SVG)</h3>
                             
                             @if(isset($reward) && $reward->svg_content)
-                                <div class="mb-4 bg-gray-900 p-4 rounded-lg flex justify-center items-center h-48 [&>svg]:w-auto [&>svg]:h-full">
+                                <div class="mb-4 bg-gray-50 border border-gray-200 p-4 rounded-lg flex justify-center items-center h-48 shadow-inner [&>svg]:w-auto [&>svg]:h-full">
                                     {!! $reward->svg_content !!}
                                 </div>
                             @endif
