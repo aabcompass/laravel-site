@@ -2,37 +2,41 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- Отключаем масштабирование (зум), чтобы приложение ощущалось как нативное -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пульт: {{ $group->name }}</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <!-- MathJax -->
     <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } }; </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     
     <style>
         body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
         mjx-container svg { display: inline; }
-        /* Скрываем скроллбар в панели наград для красоты */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         [x-cloak] { display: none !important; }
+        
+        /* Умное сокращение текста */
+        .name-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
-<body x-data="remoteApp()" class="h-screen flex flex-col overflow-hidden text-gray-800">
+<body x-data="remoteApp()" class="h-screen flex flex-col overflow-hidden text-gray-800 relative">
 
-    <!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (TOAST) И ОТМЕНА -->
-    <div x-show="toast.show" x-transition x-cloak class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg">
+    <!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (TOAST) -->
+    <div x-show="toast.show" x-transition.opacity x-cloak class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between bg-green-600 text-white px-4 py-3 rounded-lg shadow-xl border border-green-500">
         <div class="font-bold text-sm" x-html="toast.message"></div>
-        <button @click="undoReward()" class="bg-white text-green-700 font-bold px-3 py-1 rounded text-sm shadow active:scale-95 transition">
-            ОТМЕНИТЬ
-        </button>
+        <button @click="undoReward()" class="bg-white text-green-700 font-black px-3 py-1.5 rounded text-sm shadow active:scale-95 transition">ОТМЕНИТЬ</button>
     </div>
 
-    <!-- ШАПКА: ВЫБОР ГРУППЫ -->
+    <!-- ОГРОМНЫЙ ОВЕРЛЕЙ ПРИ ВЫБОРЕ ПУЛЕТКОЙ -->
+    <div x-show="showWinner" x-transition.opacity x-cloak class="fixed inset-0 z-[100] bg-indigo-900/95 backdrop-blur-sm flex flex-col items-center justify-center text-white cursor-pointer" @click="showWinner = false">
+        <div class="text-2xl text-indigo-300 font-bold mb-6 uppercase tracking-widest animate-pulse">Отвечает</div>
+        <div class="text-6xl md:text-8xl font-black text-center px-4 leading-tight text-yellow-400 drop-shadow-2xl" x-text="winnerName"></div>
+        <div class="mt-12 text-sm opacity-50 bg-white/10 px-4 py-2 rounded-full">(Нажмите куда-нибудь, чтобы продолжить)</div>
+    </div>
+
+    <!-- ШАПКА -->
     <header class="bg-indigo-600 text-white p-3 shadow-md z-10 flex-shrink-0 flex items-center gap-3">
         <select @change="changeGroup($event.target.value)" class="flex-1 bg-indigo-700 border-none text-white text-lg font-bold rounded p-2 focus:ring-0">
             @foreach($allGroups as $g)
@@ -50,42 +54,44 @@
         </button>
     </div>
 
-    <!-- СПИСОК УЧЕНИКОВ (ПРОКРУЧИВАЕТСЯ) -->
-    <main class="flex-1 overflow-y-auto p-3">
+    <!-- СПИСОК УЧЕНИКОВ (3 КОЛОНКИ, БОЛЬШОЙ ОТСТУП СНИЗУ) -->
+    <!-- pb-40 гарантирует, что список не заедет под нижнюю панель наград -->
+    <main class="flex-1 overflow-y-auto p-2 pb-40">
         @if($students->isEmpty())
-            <div class="text-center text-gray-500 mt-10">В этой группе нет учеников.</div>
+            <div class="text-center text-gray-500 mt-10 font-bold">В этой группе нет учеников.</div>
         @else
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pb-32">
+            <!-- ИЗМЕНЕНИЕ: grid-cols-3 для 3 колонок -->
+            <div class="grid grid-cols-3 gap-2">
                 <template x-for="student in students" :key="student.id">
                     <button 
                         @click="selectStudent(student.id)"
                         :class="{
-                            'bg-yellow-400 text-yellow-900 scale-105 shadow-lg border-yellow-500': highlightedStudentId === student.id && rouletteRunning,
+                            'bg-yellow-400 text-yellow-900 scale-105 shadow-xl border-yellow-500 z-10': highlightedStudentId === student.id && rouletteRunning,
                             'bg-indigo-600 text-white shadow-md border-indigo-700': selectedStudentId === student.id && !rouletteRunning,
                             'bg-white text-gray-700 border-gray-200 shadow-sm hover:bg-gray-50': selectedStudentId !== student.id && (highlightedStudentId !== student.id || !rouletteRunning)
                         }"
-                        class="p-3 rounded-xl border text-sm font-bold transition-all duration-100 flex flex-col items-center justify-center text-center h-16"
+                        class="p-2 rounded-lg border flex flex-col items-center justify-center text-center h-16 transition-all duration-75"
                     >
-                        <span x-text="student.last_name"></span>
-                        <span x-text="student.first_name" class="text-xs opacity-80 font-normal"></span>
+                        <!-- ИЗМЕНЕНИЕ: Умное уменьшение текста -->
+                        <span x-text="student.last_name" class="font-bold text-[13px] leading-tight name-clamp w-full"></span>
+                        <span x-text="student.first_name" class="text-[11px] opacity-80 font-normal truncate w-full mt-0.5"></span>
                     </button>
                 </template>
             </div>
         @endif
     </main>
 
-    <!-- ПАНЕЛЬ НАГРАД (ПРИЛИПШАЯ К НИЗУ) -->
-    <footer class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 pb-safe">
-        <div class="p-1 bg-gray-50 text-center text-xs text-gray-500 font-bold border-b">
+    <!-- ПАНЕЛЬ НАГРАД -->
+    <footer class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.1)] z-20 pb-safe">
+        <div class="p-1.5 bg-gray-50 text-center text-[11px] uppercase tracking-wider text-gray-500 font-black border-b">
             <span x-show="selectedStudentId" class="text-indigo-600">Выберите награду для выдачи ↓</span>
             <span x-show="!selectedStudentId">Сначала выберите ученика ↑</span>
         </div>
         
-        <!-- Горизонтальный скролл для наград -->
         <div class="flex overflow-x-auto p-3 gap-3 no-scrollbar items-center">
             @foreach($rewards as $reward)
                 <button 
-                    @click="giveReward({{ $reward->id }}, '{{ $reward->name }}')"
+                    @click="giveReward({{ $reward->id }}, '{{ addslashes($reward->name) }}')"
                     :class="selectedStudentId ? 'opacity-100 active:scale-90 hover:bg-gray-50' : 'opacity-40 grayscale'"
                     class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 bg-white border border-gray-200 rounded-2xl shadow-sm transition-all"
                 >
@@ -104,32 +110,32 @@
         </div>
     </footer>
 
-    <!-- Логика приложения -->
+    <!-- Логика -->
     <script>
         function remoteApp() {
             return {
-                token: '{{ $token }}',
                 students: @json($students->map->only(['id', 'first_name', 'last_name'])),
                 
                 selectedStudentId: null,
                 highlightedStudentId: null,
                 rouletteRunning: false,
                 
+                showWinner: false,
+                winnerName: '',
+
                 toast: { show: false, message: '', rewardId: null },
                 toastTimeout: null,
 
-                // Смена группы (редирект с сохранением токена)
                 changeGroup(groupId) {
-                    window.location.href = `/class-rewards/${groupId}?token=${this.token}`;
+                    // Обратите внимание, мы переходим на чистый URL, так как сессия уже есть!
+                    window.location.href = `/class-rewards/${groupId}`;
                 },
 
-                // Выбор ученика вручную
                 selectStudent(id) {
                     if (this.rouletteRunning) return;
                     this.selectedStudentId = id;
                 },
 
-                // Рулетка
                 spinRoulette() {
                     if (this.rouletteRunning || this.students.length === 0) return;
                     
@@ -137,29 +143,27 @@
                     this.selectedStudentId = null;
                     
                     let spins = 0;
-                    const maxSpins = 20 + Math.floor(Math.random() * 10); // Рандомное количество прыжков (20-30)
+                    const maxSpins = 20 + Math.floor(Math.random() * 10);
                     
-                    // Звук тиканья (опционально, можно раскомментировать, если есть аудиофайл)
-                    // const tickSound = new Audio('/tick.mp3');
-
                     const interval = setInterval(() => {
                         const randomIdx = Math.floor(Math.random() * this.students.length);
                         this.highlightedStudentId = this.students[randomIdx].id;
-                        // tickSound.play();
                         
                         spins++;
                         if (spins >= maxSpins) {
                             clearInterval(interval);
                             this.selectedStudentId = this.highlightedStudentId;
-                            this.rouletteRunning = false;
                             
-                            // Звук победы
-                            // new Audio('/tada.mp3').play();
+                            // Подготавливаем большое окно победителя
+                            const winner = this.students.find(s => s.id === this.selectedStudentId);
+                            this.winnerName = `${winner.last_name} ${winner.first_name}`;
+                            this.showWinner = true;
+                            
+                            this.rouletteRunning = false;
                         }
-                    }, 100); // Скорость прыжков
+                    }, 100);
                 },
 
-                // Выдача награды
                 async giveReward(rewardId, rewardName) {
                     if (!this.selectedStudentId) return;
 
@@ -172,13 +176,11 @@
                             body: JSON.stringify({ student_id: this.selectedStudentId, reward_id: rewardId })
                         });
                         
+                        if (!res.ok) throw new Error();
                         let data = await res.json();
                         
                         if (data.success) {
-                            // Показываем уведомление
                             this.showToast(`<b>${studentName}</b> получил(а) <b>${rewardName}</b>!`, data.id);
-                            
-                            // Сбрасываем выбор
                             this.selectedStudentId = null;
                             this.highlightedStudentId = null;
                         }
@@ -187,18 +189,15 @@
                     }
                 },
 
-                // Показ уведомления
                 showToast(msg, id) {
                     this.toast.message = msg;
                     this.toast.rewardId = id;
                     this.toast.show = true;
                     
                     if(this.toastTimeout) clearTimeout(this.toastTimeout);
-                    // Скрываем плашку через 5 секунд
                     this.toastTimeout = setTimeout(() => { this.toast.show = false; }, 5000);
                 },
 
-                // Отмена выдачи (Undo)
                 async undoReward() {
                     if (!this.toast.rewardId) return;
                     try {
@@ -208,7 +207,7 @@
                         });
                         if (res.ok) {
                             this.toast.show = false;
-                            alert('Выдача награды отменена!');
+                            alert('Выдача отменена!');
                         }
                     } catch(e) {
                         alert('Ошибка сети при отмене.');

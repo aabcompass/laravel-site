@@ -90,36 +90,35 @@ class StudentRewardController extends Controller
     // МОБИЛЬНЫЙ ПУЛЬТ УЧИТЕЛЯ (НА УРОКЕ)
     // =========================================================================
 
+
     /**
-     * Отображение мобильного пульта (Вход по токену)
+     * Отображение мобильного пульта
      */
     public function remoteShow(Request $request, Group $group)
     {
-        $token = $request->query('token');
-        if (!$token) abort(403, 'Токен доступа не передан.');
-
-        // Ищем учителя по токену
-        $teacher = User::where('auth_token', $token)->first();
-        if (!$teacher || !$teacher->hasAnyRole(['teacher', 'author', 'admin'])) {
-            abort(403, 'Неверный токен или нет прав преподавателя.');
+        // Если передали токен в URL - авторизуем и делаем редирект, чтобы скрыть токен
+        if ($token = $request->query('token')) {
+            $teacher = User::where('auth_token', $token)->first();
+            if ($teacher && $teacher->hasAnyRole(['teacher', 'author', 'admin'])) {
+                auth()->login($teacher, true); // true = Запомнить меня навсегда
+                // Перенаправляем на чистый URL без токена!
+                return redirect()->route('remote.show', $group->id);
+            }
         }
 
-        // Авторизуем учителя (чтобы безопасно работали AJAX-запросы)
-        auth()->login($teacher);
+        // Если токена нет, проверяем, есть ли у пользователя сессия
+        if (!auth()->check() || !auth()->user()->hasAnyRole(['teacher', 'author', 'admin'])) {
+            abort(403, 'Нет доступа. Войдите в систему или используйте персональную ссылку с токеном.');
+        }
 
-        // Получаем всех учеников выбранной группы
         $students = User::where('group_id', $group->id)->orderBy('last_name')->get();
-        
-        // Получаем все группы для выпадающего списка вверху
         $allGroups = Group::orderBy('grade')->orderBy('name')->get();
-
-        // Получаем только награды "На лету" И требующие регистрации
         $rewards = Reward::where('is_for_answer', true)
                          ->where('requires_registration', true)
                          ->orderBy('z_number')
                          ->get();
 
-        return view('rewards.remote', compact('group', 'students', 'allGroups', 'rewards', 'token'));
+        return view('rewards.remote', compact('group', 'students', 'allGroups', 'rewards'));
     }
 
     /**

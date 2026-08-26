@@ -180,13 +180,13 @@ Route::middleware('auth')->group(function () {
                 // ДОБАВЛЯЕМ СЮДА УДАЛЕНИЕ:
         Route::delete('/rewards/journal/{studentReward}', [StudentRewardController::class, 'destroy'])->name('rewards.journal.destroy');
 
-        // ДОБАВЛЯЕМ СЮДА ШЛЮЗ ДЛЯ ПУЛЬТА:
         Route::get('/class-rewards-gateway', function () {
             $user = auth()->user();
-            $group = \App\Models\Group::orderBy('grade')->orderBy('name')->first();
-            if (!$group) return back()->with('error', 'В базе нет ни одной учебной группы.');
+            // Берем группу из параметра или первую попавшуюся
+            $group = \App\Models\Group::find(request('group_id')) ?? \App\Models\Group::orderBy('grade')->orderBy('name')->first();
             
-            // Генерируем ссылку и сразу перекидываем на пульт
+            if (!$group) return back()->with('error', 'Группа не найдена.');
+            
             return redirect()->route('remote.show', ['group' => $group->id, 'token' => $user->auth_token]);
         })->name('remote.gateway');
     });
