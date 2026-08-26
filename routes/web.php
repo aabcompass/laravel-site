@@ -18,6 +18,7 @@ use App\Http\Controllers\SystemController;
 use App\Http\Controllers\HandbookController;
 use App\Http\Controllers\SubstanceController;
 use App\Http\Controllers\RewardController;
+use App\Http\Controllers\StudentRewardController;
 
 
 Route::get('/', [\App\Http\Controllers\HandbookController::class, 'index'])->name('home');
@@ -168,6 +169,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/assignments/review/{assignment}', [ReviewController::class, 'show'])->name('assignments.review');
         Route::put('/assignments/review/{assignment}', [ReviewController::class, 'update'])->name('assignments.review.update');
         Route::patch('/variants/{variant}/tasks/{task}/self-assign', [WorkVariantController::class, 'toggleSelfAssign'])->name('variants.toggleSelfAssign');
+        // Журнал наград
+        Route::get('/rewards/journal', [StudentRewardController::class, 'journal'])->name('rewards.journal');
+        Route::post('/rewards/manual', [StudentRewardController::class, 'storeManual'])->name('rewards.storeManual');
+        Route::patch('/rewards/toggle-accounted/{studentReward}', [StudentRewardController::class, 'toggleAccounted'])->name('rewards.toggleAccounted');
+        // === МОБИЛЬНЫЙ ПУЛЬТ УЧИТЕЛЯ ===
+        Route::get('/class-rewards/{group}', [\App\Http\Controllers\StudentRewardController::class, 'remoteShow'])->name('remote.show');
+        Route::post('/class-rewards/award', [\App\Http\Controllers\StudentRewardController::class, 'remoteAward'])->name('remote.award')->middleware('auth');
+        Route::delete('/class-rewards/undo/{studentReward}', [\App\Http\Controllers\StudentRewardController::class, 'remoteUndo'])->name('remote.undo')->middleware('auth');
+                // ДОБАВЛЯЕМ СЮДА УДАЛЕНИЕ:
+        Route::delete('/rewards/journal/{studentReward}', [StudentRewardController::class, 'destroy'])->name('rewards.journal.destroy');
+
+        // ДОБАВЛЯЕМ СЮДА ШЛЮЗ ДЛЯ ПУЛЬТА:
+        Route::get('/class-rewards-gateway', function () {
+            $user = auth()->user();
+            $group = \App\Models\Group::orderBy('grade')->orderBy('name')->first();
+            if (!$group) return back()->with('error', 'В базе нет ни одной учебной группы.');
+            
+            // Генерируем ссылку и сразу перекидываем на пульт
+            return redirect()->route('remote.show', ['group' => $group->id, 'token' => $user->auth_token]);
+        })->name('remote.gateway');
     });
 });
 
