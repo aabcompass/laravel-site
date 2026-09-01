@@ -39,7 +39,7 @@
 
             @if($groupId)
                 <div class="mb-4 flex justify-end">
-                    <a href="{{ route('remote.gateway') }}" target="_blank" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105 flex items-center gap-2">
+                    <a href="{{ route('remote.gateway', ['group_id' => $groupId]) }}" target="_blank" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105 flex items-center gap-2"> 
                         <span class="text-xl">📱</span> Открыть пульт для этой группы
                     </a>
                 </div>

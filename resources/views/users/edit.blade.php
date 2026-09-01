@@ -36,7 +36,7 @@
                         </div>
                         <div>
                             <label class="block font-medium text-sm text-gray-700 mb-1">Пароль {{ isset($user) ? '(оставьте пустым, чтобы не менять)' : '*' }}</label>
-                            <input type="text" name="password" class="border-gray-300 rounded w-full" {{ isset($user) ? '' : 'required' }}>
+                            <input type="password" name="password" class="border-gray-300 rounded w-full" {{ isset($user) ? '' : 'required' }}>
                         </div>
                     </div>
 
