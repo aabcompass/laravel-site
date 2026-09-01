@@ -17,19 +17,35 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @forelse($assignments as $history)
-                <!-- Ссылка ведет на публичную страницу варианта -->
-                <a href="{{ route('public.variant', $history->variant->public_hash) }}" class="block bg-white p-5 rounded-lg border border-gray-200 hover:border-indigo-400 hover:shadow-md transition group">
-                    <div class="text-xs text-indigo-500 font-bold mb-1 uppercase tracking-wider">
-                        {{ $history->variant->work->title ?? 'Без названия' }}
+                @if($history->variant->public_hash)
+                    <!-- Если хэш есть - выводим кликабельную ссылку -->
+                    <a href="{{ route('public.variant', $history->variant->public_hash) }}" class="block bg-white p-5 rounded-lg border border-gray-200 hover:border-indigo-400 hover:shadow-md transition group">
+                        <div class="text-xs text-indigo-500 font-bold mb-1 uppercase tracking-wider">
+                            {{ $history->variant->work->title ?? 'Без названия' }}
+                        </div>
+                        <div class="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition">
+                            {{ $history->variant->name }}
+                        </div>
+                        <div class="mt-4 text-xs text-gray-400 font-medium border-t border-gray-100 pt-2 flex justify-between">
+                            <span>Выдано</span>
+                            <span>{{ $history->assigned_at->format('d.m.Y') }}</span>
+                        </div>
+                    </a>
+                @else
+                    <!-- Если хэша нет - выводим некликабельную серую карточку (защита от ошибок) -->
+                    <div class="block bg-gray-50 p-5 rounded-lg border border-gray-200 opacity-75">
+                        <div class="text-xs text-gray-500 font-bold mb-1 uppercase tracking-wider">
+                            {{ $history->variant->work->title ?? 'Без названия' }}
+                        </div>
+                        <div class="font-bold text-gray-700 text-lg">
+                            {{ $history->variant->name }}
+                        </div>
+                        <div class="mt-4 text-xs text-red-400 font-medium border-t border-gray-200 pt-2 flex justify-between">
+                            <span>Вариант не опубликован</span>
+                            <span>{{ $history->assigned_at->format('d.m.Y') }}</span>
+                        </div>
                     </div>
-                    <div class="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition">
-                        {{ $history->variant->name }}
-                    </div>
-                    <div class="mt-4 text-xs text-gray-400 font-medium border-t border-gray-100 pt-2 flex justify-between">
-                        <span>Выдано</span>
-                        <span>{{ $history->assigned_at->format('d.m.Y') }}</span>
-                    </div>
-                </a>
+                @endif
             @empty
                 <div class="col-span-full bg-white p-8 text-center text-gray-500 rounded-lg border shadow-sm">
                     Этой группе пока не выдано ни одной работы.

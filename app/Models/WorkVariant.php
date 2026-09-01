@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class WorkVariant extends Model
 {
@@ -36,5 +37,14 @@ class WorkVariant extends Model
     // Вспомогательный метод: Выдан ли этот вариант кому-нибудь?
     public function isAssigned() {
         return $this->assignments()->count() > 0;
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($variant) {
+            if (empty($variant->public_hash)) {
+                $variant->public_hash = Str::random(16);
+            }
+        });
     }
 }
