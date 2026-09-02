@@ -16,41 +16,56 @@ class StudentRewardController extends Controller
      */
     public function journal(Request $request)
     {
-        // По умолчанию берем дату ровно месяц назад
-        $dateFrom = $request->input('date_from', Carbon::now()->subMonth()->format('Y-m-d'));
+        $dateFrom = $request->input('date_from', \Carbon\Carbon::now()->subMonth()->format('Y-m-d'));
         $groupId = $request->input('group_id');
 
-        $groups = Group::orderBy('grade')->orderBy('name')->get();
-        // Награды для ручного добавления (только те, что требуют регистрации)
-        $availableRewards = Reward::where('requires_registration', true)->orderBy('z_number')->get();
+        $groups = \App\Models\Group::orderBy('grade')->orderBy('name')->get();
+        $availableRewards = \App\Models\Reward::where('requires_registration', true)->orderBy('z_number')->get();
+
+        // Достаем уникальные причины, которые вводил этот учитель (для автозаполнения)
+        $teacherReasons = StudentReward::where('teacher_id', auth()->id())
+            ->whereNotNull('reason')->where('reason', '!=', '')
+            ->distinct()->pluck('reason');
+
+        // Берем последнее введенное описание для этой группы из сессии
+        $defaultReason = $groupId ? session('last_reason_group_' . $groupId, '') : '';
 
         $students = [];
         $rewardsMatrix = [];
-        $uniqueDates = [];
+        $uniqueColumns = []; // Теперь колонки - это комбинация Дата + Причина
 
         if ($groupId) {
             $students = User::where('group_id', $groupId)->orderBy('last_name')->get();
             $studentIds = $students->pluck('id')->toArray();
 
-            // Получаем все награды этой группы за выбранный период
             $studentRewards = StudentReward::with(['reward'])
                 ->whereIn('student_id', $studentIds)
                 ->whereDate('created_at', '>=', $dateFrom)
                 ->orderBy('created_at')
                 ->get();
 
-            // Группируем даты (только те дни, когда реально выдавались награды)
-            $uniqueDates = $studentRewards->pluck('created_at')->map(fn($d) => $d->format('Y-m-d'))->unique()->sort()->values();
-
-            // Строим матрицу: $rewardsMatrix[student_id][date] = [массив наград]
+            $columnsRaw = [];
             foreach ($studentRewards as $sr) {
                 $dateKey = $sr->created_at->format('Y-m-d');
-                $rewardsMatrix[$sr->student_id][$dateKey][] = $sr;
+                $reasonKey = $sr->reason ?? '';
+                $colKey = $dateKey . '|' . $reasonKey; // Создаем уникальный ключ колонки
+
+                if (!isset($columnsRaw[$colKey])) {
+                    $columnsRaw[$colKey] = ['date' => $dateKey, 'reason' => $sr->reason];
+                }
+                $rewardsMatrix[$sr->student_id][$colKey][] = $sr;
             }
+
+            // Сортируем колонки: сначала по дате, затем по алфавиту причины
+            usort($columnsRaw, function($a, $b) {
+                if ($a['date'] == $b['date']) return strcmp($a['reason'], $b['reason']);
+                return strcmp($a['date'], $b['date']);
+            });
+            $uniqueColumns = $columnsRaw;
         }
 
         return view('rewards.journal', compact(
-            'groups', 'groupId', 'dateFrom', 'students', 'uniqueDates', 'rewardsMatrix', 'availableRewards'
+            'groups', 'groupId', 'dateFrom', 'students', 'uniqueColumns', 'rewardsMatrix', 'availableRewards', 'teacherReasons', 'defaultReason'
         ));
     }
 
@@ -63,16 +78,22 @@ class StudentRewardController extends Controller
             'student_id' => 'required|exists:Users,id',
             'reward_id' => 'required|exists:Rewards,id',
             'date' => 'required|date',
+            'reason' => 'nullable|string|max:150', // <- Валидация причины
         ]);
 
         StudentReward::create([
             'student_id' => $request->student_id,
             'reward_id' => $request->reward_id,
             'teacher_id' => auth()->id(),
-            'is_accounted' => true, // Ручное добавление сразу считается учтенным!
-            'is_handed_over' => true, // Считаем, что и вручено
-            'created_at' => Carbon::parse($request->date)->setTime(12, 0, 0), // Ставим время на полдень
+            'reason' => $request->reason, // <- Сохраняем причину
+            'is_accounted' => true,
+            'is_handed_over' => true,
+            'created_at' => \Carbon\Carbon::parse($request->date)->setTime(12, 0, 0),
         ]);
+
+        // Запоминаем эту причину в сессии для данной группы
+        $student = User::find($request->student_id);
+        session(['last_reason_group_' . $student->group_id => $request->reason]);
 
         return back()->with('success', 'Награда успешно добавлена ученику.');
     }
@@ -135,7 +156,8 @@ class StudentRewardController extends Controller
             'student_id' => $request->student_id,
             'reward_id' => $request->reward_id,
             'teacher_id' => auth()->id(),
-            'is_accounted' => false, // По умолчанию не учтено
+            'reason' => 'Устный ответ', // <- ДОБАВЛЕНО
+            'is_accounted' => false,
             'is_handed_over' => false,
             'created_at' => now()
         ]);

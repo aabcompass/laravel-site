@@ -10,7 +10,8 @@ class StudentReward extends Model
 
     protected $fillable = [
         'student_id', 'reward_id', 'teacher_id', 
-        'is_accounted', 'is_handed_over', 'claim_hash', 'created_at'
+        'is_accounted', 'is_handed_over', 'claim_hash', 'created_at',
+        'reason'
     ];
 
     protected $casts = [
