@@ -8,7 +8,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <style> mjx-container svg { display: inline; } [x-cloak] { display: none !important; } </style>
 
-    <div class="py-6" x-data="{ modalOpen: false, modalStudentId: null, modalStudentName: '', currentReason: '{{ $defaultReason }}' }">
+    <div class="py-6" x-data="{ modalOpen: false, modalStudentId: null, modalStudentName: '', currentReason: '{{ $defaultReason }}', currentReward: '{{ $defaultReward }}' }">
         <div class="max-w-[1920px] mx-auto sm:px-6 lg:px-8">
             
             @if (session('success')) <div class="mb-4 p-4 bg-green-100 text-green-700 rounded shadow-sm font-bold">{{ session('success') }}</div> @endif
@@ -185,7 +185,7 @@
 
                     <div>
                         <label class="block font-bold text-sm text-gray-700 mb-1">Выберите награду</label>
-                        <select name="reward_id" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500" required>
+                        <select name="reward_id" x-model="currentReward" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500" required>
                             <option value="">-- Выберите из списка --</option>
                             @foreach($availableRewards as $r)
                                 <option value="{{ $r->id }}">Z:{{ $r->z_number }} - {{ $r->name }}</option>

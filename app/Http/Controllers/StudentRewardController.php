@@ -29,6 +29,7 @@ class StudentRewardController extends Controller
 
         // Берем последнее введенное описание для этой группы из сессии
         $defaultReason = $groupId ? session('last_reason_group_' . $groupId, '') : '';
+        $defaultReward = $groupId ? session('last_reward_group_' . $groupId, '') : '';
 
         $students = [];
         $rewardsMatrix = [];
@@ -65,7 +66,7 @@ class StudentRewardController extends Controller
         }
 
         return view('rewards.journal', compact(
-            'groups', 'groupId', 'dateFrom', 'students', 'uniqueColumns', 'rewardsMatrix', 'availableRewards', 'teacherReasons', 'defaultReason'
+            'groups', 'groupId', 'dateFrom', 'students', 'uniqueColumns', 'rewardsMatrix', 'availableRewards', 'teacherReasons', 'defaultReason', 'defaultReward'
         ));
     }
 
@@ -94,6 +95,7 @@ class StudentRewardController extends Controller
         // Запоминаем эту причину в сессии для данной группы
         $student = User::find($request->student_id);
         session(['last_reason_group_' . $student->group_id => $request->reason]);
+        session(['last_reward_group_' . $student->group_id => $request->reward_id]);
 
         return back()->with('success', 'Награда успешно добавлена ученику.');
     }
