@@ -196,4 +196,64 @@ class StudentRewardController extends Controller
         // Всегда возвращаем успешный JSON (так как кнопка работает только через AJAX)
         return response()->json(['success' => true]);
     }
+
+    // =========================================================================
+    // ГЕНЕРАЦИЯ QR-НАГРАД (БЕЗ УЧЕНИКА)
+    // =========================================================================
+
+    /**
+     * Создание "свободной" награды с хэшем
+     */
+    public function generateQr(Request $request)
+    {
+        $request->validate([
+            'reward_id' => 'required|exists:Rewards,id',
+            'reason' => 'nullable|string|max:150',
+        ]);
+
+        $sr = StudentReward::create([
+            'student_id' => null, // Ученик пока неизвестен
+            'reward_id' => $request->reward_id,
+            'teacher_id' => auth()->id(),
+            'reason' => $request->reason,
+            'is_accounted' => false,
+            'is_handed_over' => true, // Выдаем распечатку
+            'claim_hash' => \Illuminate\Support\Str::random(40), // Генерируем уникальный хэш
+            'created_at' => now(),
+        ]);
+
+        // Открываем печатную страницу в новой вкладке
+        return redirect()->route('rewards.printQr', $sr->id);
+    }
+
+
+    /**
+     * Печатная форма А4 для награды
+     */
+    public function printQr(StudentReward $studentReward)
+    {
+        if ($studentReward->teacher_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403);
+        }
+        return view('rewards.print-qr', compact('studentReward'));
+    }
+
+    /**
+     * УЧЕНИК СКАНИРУЕТ QR-КОД (Получение награды)
+     */
+    public function claimQr($hash)
+    {
+        $sr = StudentReward::where('claim_hash', $hash)->firstOrFail();
+
+        if ($sr->student_id) {
+            return redirect()->route('dashboard')->with('error', 'Эта награда уже была кем-то получена!');
+        }
+
+        // Привязываем награду к текущему ученику
+        $sr->update([
+            'student_id' => auth()->id()
+        ]);
+
+        return redirect()->route('dashboard')->with('success', "🎉 Поздравляем! Вы получили новую награду: {$sr->reward->name}!");
+    }
 };

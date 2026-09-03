@@ -205,6 +205,12 @@ class StudentAssignmentController extends Controller
             ->orderBy('Tasks.complexity')
             ->get();
 
+        // 4.5. ПОЛУЧАЕМ НАГРАДЫ УЧЕНИКА
+        $myRewards = \App\Models\StudentReward::where('student_id', $student->id)
+            ->with(['reward', 'teacher'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         foreach ($acceptedTasks as $stat) {
             $complexityStats['labels'][] = 'Сложность ' . $stat->complexity;
             $complexityStats['data'][] = $stat->count;

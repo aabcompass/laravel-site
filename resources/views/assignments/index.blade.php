@@ -128,6 +128,44 @@
                 </div>
             @endif
             
+            <!-- ПОЛКА НАГРАД УЧЕНИКА -->
+            @if(isset($myRewards) && $myRewards->count() > 0)
+                <div class="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-800 rounded-lg p-5 shadow-lg relative overflow-hidden">
+                    <!-- Декоративные лучи -->
+                    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-5 rounded-full blur-2xl"></div>
+                    
+                    <h3 class="font-black text-xl text-yellow-400 mb-4 flex items-center gap-2 drop-shadow-md">
+                        <span>🏆 Мои трофеи</span>
+                        <span class="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">{{ $myRewards->count() }} шт.</span>
+                    </h3>
+                    
+                    <div class="flex overflow-x-auto gap-4 pb-2 no-scrollbar">
+                        @foreach($myRewards as $sr)
+                            <div class="flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 bg-white/10 border border-white/20 rounded-2xl shadow backdrop-blur-sm hover:bg-white/20 transition-all cursor-help group/trophy relative" title="Выдано: {{ $sr->created_at->format('d.m.Y') }} за {{ $sr->reason ?? 'успехи' }}">
+                                
+                                <div class="text-2xl text-white font-black drop-shadow-lg flex items-center justify-center h-12 w-full">
+                                    @if($sr->reward->symbol_latex)
+                                        <span>${!! $sr->reward->symbol_latex !!}$</span>
+                                    @elseif($sr->reward->svg_content)
+                                        <div class="h-10 w-10 [&>svg]:w-full [&>svg]:h-full">{!! $sr->reward->svg_content !!}</div>
+                                    @else
+                                        {{ $sr->reward->key }}
+                                    @endif
+                                </div>
+                                <span class="text-[10px] font-bold text-indigo-100 mt-1 leading-tight text-center px-1">{{ $sr->reward->name }}</span>
+
+                                <!-- Всплывающая инфа -->
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-white text-gray-900 text-xs rounded p-2 shadow-xl opacity-0 group-hover/trophy:opacity-100 pointer-events-none transition-opacity z-50">
+                                    <div class="font-bold text-indigo-600 border-b pb-1 mb-1">{{ $sr->reward->name }}</div>
+                                    <div class="text-gray-500 mb-1">За: {{ $sr->reason ?? '—' }}</div>
+                                    @if($sr->reward->perks)<div class="font-bold text-green-600 bg-green-50 p-1 rounded">{{ $sr->reward->perks }}</div>@endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- БЛОК 2: ГРАФИК УСПЕВАЕМОСТИ -->
             @if(!empty($complexityStats['data']))
                 <div class="bg-white p-4 rounded-lg shadow-sm border">

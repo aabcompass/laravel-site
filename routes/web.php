@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/assignments/{assignment}/recall', [StudentAssignmentController::class, 'recall'])->name('assignments.recall');
     Route::delete('/assignments/{assignment}/attachments/{attachment}', [StudentAssignmentController::class, 'destroyAttachment'])->name('assignments.attachments.destroy');
     Route::post('/student/variants/{variant}/tasks/{task}/self-assign', [StudentAssignmentController::class, 'selfAssign'])->name('student.selfAssign');
+    Route::get('/claim-reward/{hash}', [\App\Http\Controllers\StudentRewardController::class, 'claimQr'])->name('rewards.claim');
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {
@@ -179,7 +180,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/class-rewards/undo/{studentReward}', [\App\Http\Controllers\StudentRewardController::class, 'remoteUndo'])->name('remote.undo')->middleware('auth');
                 // ДОБАВЛЯЕМ СЮДА УДАЛЕНИЕ:
         Route::delete('/rewards/journal/{studentReward}', [StudentRewardController::class, 'destroy'])->name('rewards.journal.destroy');
-
+        Route::post('/rewards/generate-qr', [StudentRewardController::class, 'generateQr'])->name('rewards.generateQr');
+        Route::get('/rewards/print-qr/{studentReward}', [StudentRewardController::class, 'printQr'])->name('rewards.printQr');
         Route::get('/class-rewards-gateway', function () {
             $user = auth()->user();
             // Берем группу из параметра или первую попавшуюся
