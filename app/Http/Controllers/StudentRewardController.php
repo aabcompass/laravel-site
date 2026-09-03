@@ -179,17 +179,21 @@ class StudentRewardController extends Controller
         return response()->json(['success' => true]);
     }
 
+
     /**
-     * Удаление выданной награды из Журнала
+     * Удаление выданной награды из Журнала (AJAX)
      */
     public function destroy(StudentReward $studentReward)
     {
-        // Удалять может либо автор выдачи, либо админ
+        // Проверка прав
         if ($studentReward->teacher_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
-            abort(403, 'Вы можете удалять только выданные вами награды.');
+            return response()->json(['success' => false, 'message' => 'Нет прав на удаление.'], 403);
         }
 
+        // Удаляем из БД
         $studentReward->delete();
-        return back()->with('success', 'Награда успешно удалена из истории ученика.');
+
+        // Всегда возвращаем успешный JSON (так как кнопка работает только через AJAX)
+        return response()->json(['success' => true]);
     }
 };
