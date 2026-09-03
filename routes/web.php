@@ -174,6 +174,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/rewards/journal', [StudentRewardController::class, 'journal'])->name('rewards.journal');
         Route::post('/rewards/manual', [StudentRewardController::class, 'storeManual'])->name('rewards.storeManual');
         Route::patch('/rewards/toggle-accounted/{studentReward}', [StudentRewardController::class, 'toggleAccounted'])->name('rewards.toggleAccounted');
+        Route::patch('/rewards/toggle-handed-over/{studentReward}', [StudentRewardController::class, 'toggleHandedOver'])->name('rewards.toggleHandedOver');
+        // Общий список выданных наград
+        Route::get('/rewards/issued', [StudentRewardController::class, 'list'])->name('rewards.issued');
         // === МОБИЛЬНЫЙ ПУЛЬТ УЧИТЕЛЯ ===
         Route::get('/class-rewards/{group}', [\App\Http\Controllers\StudentRewardController::class, 'remoteShow'])->name('remote.show');
         Route::post('/class-rewards/award', [\App\Http\Controllers\StudentRewardController::class, 'remoteAward'])->name('remote.award')->middleware('auth');

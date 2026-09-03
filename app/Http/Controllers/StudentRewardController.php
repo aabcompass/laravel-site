@@ -256,4 +256,59 @@ class StudentRewardController extends Controller
 
         return redirect()->route('dashboard')->with('success', "🎉 Поздравляем! Вы получили новую награду: {$sr->reward->name}!");
     }
+
+    /**
+     * Общий список всех выданных наград (Таблица)
+     */
+    public function list(Request $request)
+    {
+        $query = StudentReward::with(['student', 'teacher', 'reward']);
+
+        // ФИЛЬТРЫ
+        $query->when($request->student_id, fn($q, $v) => $q->where('student_id', $v));
+        $query->when($request->teacher_id, fn($q, $v) => $q->where('teacher_id', $v));
+        $query->when($request->reward_id, fn($q, $v) => $q->where('reward_id', $v));
+        
+        $query->when($request->search, function($q, $v) {
+            $q->where(function($subQ) use ($v) {
+                // Ищем по названию награды или по причине выдачи
+                $subQ->whereHas('reward', fn($r) => $r->where('name', 'like', "%{$v}%"))
+                     ->orWhere('reason', 'like', "%{$v}%");
+            });
+        });
+
+        // СОРТИРОВКА
+        $sortField = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        if ($sortField === 'reward_name') {
+            // Чтобы сортировать по названию награды, нужно сджоинить таблицу Rewards
+            $query->join('Rewards', 'Student_Rewards.reward_id', '=', 'Rewards.id')
+                  ->select('Student_Rewards.*') // Избегаем конфликта ID
+                  ->orderBy('Rewards.name', $sortDir);
+        } else {
+            // Сортировка по родным полям (id, created_at)
+            $allowedSorts = ['id', 'created_at'];
+            $sortField = in_array($sortField, $allowedSorts) ? $sortField : 'created_at';
+            $query->orderBy($sortField, $sortDir);
+        }
+
+        $issuedRewards = $query->paginate(50)->withQueryString();
+
+        // Данные для выпадающих списков фильтров
+        $students = User::whereHas('roles', fn($q) => $q->where('name', 'student'))->orderBy('last_name')->get();
+        $teachers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['teacher', 'author', 'admin']))->orderBy('last_name')->get();
+        $rewardsList = Reward::orderBy('name')->get();
+
+        return view('rewards.issued', compact('issuedRewards', 'students', 'teachers', 'rewardsList', 'sortField', 'sortDir'));
+    }
+
+    /**
+     * AJAX: Переключить флажок "Вручен физический носитель"
+     */
+    public function toggleHandedOver(StudentReward $studentReward)
+    {
+        $studentReward->update(['is_handed_over' => !$studentReward->is_handed_over]);
+        return response()->json(['success' => true, 'is_handed_over' => $studentReward->is_handed_over]);
+    }
 };
