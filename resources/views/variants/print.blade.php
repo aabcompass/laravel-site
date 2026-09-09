@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Печать: {{ $variant->name }}</title>
-    <!-- MathJax -->
     <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } }; </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
@@ -28,11 +27,12 @@
         .instructions { font-style: italic; margin-bottom: 15px; }
 
         .task { 
-            margin-bottom: 15px; /* Базовый отступ */
+            margin-bottom: 15px; 
             page-break-inside: avoid;
         }
         .task-number { font-weight: bold; margin-right: 5px; }
         
+        /* Стили для картинок в версии учителя */
         .task-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
         .task-images img { max-width: 100%; border: 1px solid #ccc; }
 
@@ -43,34 +43,39 @@
             margin-top: 10px;
             margin-bottom: 20px;
             width: 100%;
-            /* 1 "строка" = 1 клетка = 5 мм */
-            height: {{ $variant->print_spacing_lines * 5 }}mm;
-            
-            /* Рисуем клетку 5х5 мм */
+            /* Минимальная высота задается из настроек, но блок растянется, если картинка длиннее */
             background-image: 
                 linear-gradient(to right, #9ca3af 1px, transparent 1px),
                 linear-gradient(to bottom, #9ca3af 1px, transparent 1px);
             background-size: 5mm 5mm;
-            
-            /* Замыкаем рамку со всех сторон для красоты */
             border: 1px solid #9ca3af;
-            
-            /* Принудительная печать фона в современных браузерах */
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
         }
+        
+        /* Clearfix, чтобы контейнер клетки растягивался под высоту плавающих картинок */
+        .solution-grid::after {
+            content: ""; display: table; clear: both;
+        }
+
+        /* === КАРТИНКА, ОБТЕКАЕМАЯ КЛЕТКОЙ === */
+        .floated-img {
+            float: left;
+            background: #fff; /* Белый фон скрывает линии клетки под картинкой */
+            padding: 0 10px 10px 0; /* Отступы, чтобы клетка не прилипала вплотную к рисунку */
+            box-sizing: border-box;
+        }
+        .floated-img img {
+            width: 100%;
+            display: block;
+            border: 1px solid #ccc;
+        }
 
         /* Линия отреза */
-        .cut-line { 
-            border-top: 1px dashed #999; 
-            margin: 30px 0; 
-            position: relative; 
-            page-break-after: always;
-        }
+        .cut-line { border-top: 1px dashed #999; margin: 30px 0; position: relative; page-break-after: always; }
         .cut-line::before { content: "✂"; position: absolute; top: -14px; left: -20px; font-size: 20px; color: #666; background: #fff; padding: 0 5px; }
 
-        /* СПЕЦИАЛЬНЫЙ CSS ДЛЯ ПРИНТЕРА */
         @media print {
             @page { margin: 1cm; }
             body { background: transparent; }
@@ -93,7 +98,6 @@
     @for ($i = 0; $i < $variant->print_copies_per_page; $i++)
         
         <div class="instance" style="padding: 20px; box-sizing: border-box; overflow: hidden;">
-            <!-- Шапка -->
             <div class="header">
                 <h1>{{ $variant->work->title }}</h1>
                 <h2>{{ $variant->name }}</h2>
@@ -101,11 +105,7 @@
 
             <div class="meta-info">
                 <div>{{ $group ? 'Группа: ' . $group->name : '' }}</div>
-                <div>
-                    @if($variant->print_show_name_field)
-                        Фамилия Имя: ____________________________
-                    @endif
-                </div>
+                <div>@if($variant->print_show_name_field) Фамилия Имя: ____________________________ @endif</div>
                 <div>Дата: _____/_____/20___</div>
             </div>
 
@@ -113,7 +113,6 @@
                 <div class="instructions">{!! nl2br(e($variant->print_instructions)) !!}</div>
             @endif
 
-            <!-- Список задач -->
             @foreach($variantTasks as $task)
                 <div class="task">
                     <span class="task-number">
@@ -129,25 +128,32 @@
                     </span>
                     <span class="task-text">{!! nl2br(e($task->task_text)) !!}</span>
                     
-                    @if($task->taskImages->count() > 0)
-                        <div class="task-images">
-                            @foreach($task->taskImages as $img)
-                                <img src="{{ asset($img->file_path) }}" style="width: {{ $img->scale }}%;">
-                            @endforeach
-                        </div>
-                    @endif
-
-                    <!-- ВЫВОД РЕШЕНИЙ ИЛИ КЛЕТКИ -->
                     @if($showAnswers)
+                        <!-- ВЕРСИЯ УЧИТЕЛЯ: Картинки просто под текстом, без клетки -->
+                        @if($task->taskImages->count() > 0)
+                            <div class="task-images">
+                                @foreach($task->taskImages as $img)
+                                    <img src="{{ asset($img->file_path) }}" style="width: {{ $img->scale }}%;">
+                                @endforeach
+                            </div>
+                        @endif
                         <div class="teacher-version">
                             <strong>ОТВЕТ:</strong> {{ $task->answer_numeric }} {{ $task->answer_units }}<br>
                             <strong>Решение:</strong> {!! nl2br(e($task->author_solution_text)) !!}
                         </div>
                         <div style="margin-bottom: {{ $variant->print_spacing_lines * 5 }}mm;"></div>
                     @else
-                        @if($variant->print_spacing_lines > 0)
-                            <!-- Тот самый блок с сеткой -->
-                            <div class="solution-grid"></div>
+                        <!-- ВЕРСИЯ УЧЕНИКА: Блок с клеткой обтекает картинки -->
+                        @if($variant->print_spacing_lines > 0 || $task->taskImages->count() > 0)
+                            <!-- min-height задается из настроек, но блок растянется под картинку, если надо -->
+                            <div class="solution-grid" style="min-height: {{ $variant->print_spacing_lines * 5 }}mm;">
+                                @foreach($task->taskImages as $img)
+                                    <!-- Обертка картинки, которая "расталкивает" клетку -->
+                                    <div class="floated-img" style="width: {{ $img->scale }}%;">
+                                        <img src="{{ asset($img->file_path) }}">
+                                    </div>
+                                @endforeach
+                            </div>
                         @endif
                     @endif
                 </div>
