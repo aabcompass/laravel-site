@@ -48,7 +48,10 @@
                 linear-gradient(to right, #9ca3af 1px, transparent 1px),
                 linear-gradient(to bottom, #9ca3af 1px, transparent 1px);
             background-size: 5mm 5mm;
-            border: 1px solid #9ca3af;
+            
+            /* РАМКА УДАЛЕНА */
+            
+            /* Принудительная печать фона в современных браузерах */
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
