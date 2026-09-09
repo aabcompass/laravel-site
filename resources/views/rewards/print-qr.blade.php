@@ -46,7 +46,7 @@
 <body>
 
     <div class="certificate">
-        <div class="reason">ЗА ЗАСЛУГИ: <span style="color: #4f46e5;">{{ $studentReward->reason ?? 'ОТЛИЧНАЯ РАБОТА' }}</span></div>
+        <div class="reason"> <span style="color: #4f46e5;">{{ $studentReward->reason ?? 'ОТЛИЧНАЯ РАБОТА' }}</span></div>
         
         <div class="main-content">
             <div class="details">
@@ -73,11 +73,11 @@
 
             <div class="qr-block">
                 {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(250)->generate(route('rewards.claim', $studentReward->claim_hash)) !!}
-                <div class="qr-hint">Отсканируй камерой, чтобы забрать награду в инвентарь!</div>
+                <div class="qr-hint">Отсканируй камерой, чтобы зарегистрировать!</div>
             </div>
         </div>
 
-        <div class="teacher-sign">Выдал(а): {{ $studentReward->teacher->last_name }} {{ Str::substr($studentReward->teacher->first_name, 0, 1) }}.</div>
+        <!--<div class="teacher-sign">Выдал(а): {{ $studentReward->teacher->last_name }} {{ Str::substr($studentReward->teacher->first_name, 0, 1) }}.</div>-->
     </div>
 
 </body>
