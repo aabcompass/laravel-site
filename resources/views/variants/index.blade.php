@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-4">
-            <a href="{{ route('works.index') }}" class="text-gray-500 hover:text-blue-600 transition">&larr; К списку работ</a>
+            <a href="{{ session('works_return_url', route('works.index')) }}" class="text-gray-500 hover:text-blue-600 transition">&larr; К списку работ</a>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ $work->title }} <span class="text-gray-400 text-sm font-normal ml-2">(Управление вариантами)</span>
             </h2>

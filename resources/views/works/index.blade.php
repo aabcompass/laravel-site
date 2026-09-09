@@ -45,6 +45,11 @@
             </form>
 
             <!-- СПИСОК РАБОТ -->
+            <div class="flex justify-end mb-2">
+                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                    ℹ️ Сортировка работ производится по тому, как отсортированы темы в <a href="{{ route('topics.index') }}" class="text-blue-500 hover:underline">справочнике</a>.
+                </span>
+            </div>
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border">
                 <table class="w-full text-sm text-left text-gray-600">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">

@@ -10,11 +10,12 @@ class WorkController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Указываем select('Works.*'), чтобы при JOIN не перезаписался ID работы на ID темы
+        // ЗАПОМИНАЕМ ТЕКУЩИЙ URL СО ВСЕМИ ФИЛЬТРАМИ И ПАГИНАЦИЕЙ
+        session(['works_return_url' => request()->fullUrl()]);
+
         $query = Work::select('Works.*')
             ->with(['topic', 'author'])
             ->withCount('variants')
-            // 2. Джоиним таблицу тем, чтобы получить доступ к её полям для сортировки
             ->join('Topics', 'Works.topic_id', '=', 'Topics.id');
 
         // 3. Фильтры (обязательно добавляем префикс 'Works.', чтобы избежать ошибки SQL "ambiguous column")
