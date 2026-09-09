@@ -10,15 +10,29 @@ class WorkController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Work::with(['topic', 'author'])->withCount('variants');
+        // 1. Указываем select('Works.*'), чтобы при JOIN не перезаписался ID работы на ID темы
+        $query = Work::select('Works.*')
+            ->with(['topic', 'author'])
+            ->withCount('variants')
+            // 2. Джоиним таблицу тем, чтобы получить доступ к её полям для сортировки
+            ->join('Topics', 'Works.topic_id', '=', 'Topics.id');
 
-        // Фильтры
-        $query->when($request->grade, fn($q, $v) => $q->where('grade', $v));
-        $query->when($request->topic_id, fn($q, $v) => $q->where('topic_id', $v));
-        $query->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"));
+        // 3. Фильтры (обязательно добавляем префикс 'Works.', чтобы избежать ошибки SQL "ambiguous column")
+        $query->when($request->grade, fn($q, $v) => $q->where('Works.grade', $v));
+        $query->when($request->topic_id, fn($q, $v) => $q->where('Works.topic_id', $v));
+        $query->when($request->search, fn($q, $v) => $q->where('Works.title', 'like', "%{$v}%"));
 
-        $works = $query->orderByDesc('id')->paginate(50)->withQueryString();
-        $topics = Topic::whereNull('parent_id')->orWhere('parent_id', 0)->with('children')->orderBy('sorting_num')->get();
+        // 4. Сортируем: сначала по порядку тем, затем по ID самой работы (на случай совпадений)
+        $works = $query->orderBy('Topics.sorting_num', 'asc')
+                       ->orderBy('Works.id', 'desc')
+                       ->paginate(50)
+                       ->withQueryString();
+
+        $topics = Topic::whereNull('parent_id')
+                       ->orWhere('parent_id', 0)
+                       ->with('children')
+                       ->orderBy('sorting_num')
+                       ->get();
 
         return view('works.index', compact('works', 'topics'));
     }
