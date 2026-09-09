@@ -7,7 +7,7 @@
     <script> MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } }; </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-<style>
+    <style>
         body { 
             font-family: 'Times New Roman', Times, serif; 
             color: #000; margin: 0; padding: 0; background: #fff;
@@ -28,7 +28,7 @@
         .instructions { font-style: italic; margin-bottom: 15px; }
 
         .task { 
-            margin-bottom: {{ $variant->print_spacing_lines }}em; 
+            margin-bottom: 15px; /* Базовый отступ */
             page-break-inside: avoid;
         }
         .task-number { font-weight: bold; margin-right: 5px; }
@@ -38,34 +38,49 @@
 
         .teacher-version { background: #f0f0f0; padding: 10px; border-left: 3px solid #000; margin-top: 10px; font-family: sans-serif; font-size: 0.9em; }
         
+        /* === ТЕТРАДНАЯ КЛЕТКА === */
+        .solution-grid {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            /* 1 "строка" = 1 клетка = 5 мм */
+            height: {{ $variant->print_spacing_lines * 5 }}mm;
+            
+            /* Рисуем клетку 5х5 мм */
+            background-image: 
+                linear-gradient(to right, #9ca3af 1px, transparent 1px),
+                linear-gradient(to bottom, #9ca3af 1px, transparent 1px);
+            background-size: 5mm 5mm;
+            
+            /* Замыкаем рамку со всех сторон для красоты */
+            border: 1px solid #9ca3af;
+            
+            /* Принудительная печать фона в современных браузерах */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
         /* Линия отреза */
         .cut-line { 
             border-top: 1px dashed #999; 
             margin: 30px 0; 
             position: relative; 
-            /* УБРАЛИ жесткий разрыв страницы отсюда */
+            page-break-after: always;
         }
-        .cut-line::before { 
-            content: "✂"; position: absolute; top: -14px; left: -20px; 
-            font-size: 20px; color: #666; background: #fff; padding: 0 5px; 
-        }
+        .cut-line::before { content: "✂"; position: absolute; top: -14px; left: -20px; font-size: 20px; color: #666; background: #fff; padding: 0 5px; }
 
         /* СПЕЦИАЛЬНЫЙ CSS ДЛЯ ПРИНТЕРА */
         @media print {
-            /* Уменьшаем дефолтные отступы принтера, чтобы влезло больше текста */
             @page { margin: 1cm; }
-            
             body { background: transparent; }
             .wrapper { max-width: none; width: 100%; margin: 0; }
-            
-            /* Запрещаем разрывать сам вариант посередине, если он помещается на лист */
             .instance { page-break-inside: avoid; }
             
             @if($variant->print_copies_per_page == 2)
-                /* Для 2-х экземпляров отключаем Grid, они просто встанут друг под другом */
                 .print-grid { display: block; }
+                .cut-line { page-break-after: auto; }
             @elseif($variant->print_copies_per_page == 4)
-                /* Для 4-х используем колонки */
                 .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
                 .cut-line { display: none; }
             @endif
@@ -75,7 +90,6 @@
 <body>
 
 <div class="wrapper print-grid">
-    <!-- Запускаем цикл столько раз, сколько экземпляров на страницу мы выбрали -->
     @for ($i = 0; $i < $variant->print_copies_per_page; $i++)
         
         <div class="instance" style="padding: 20px; box-sizing: border-box; overflow: hidden;">
@@ -108,7 +122,7 @@
                             (@php
                                 $meta = [];
                                 if ($variant->print_show_task_id) $meta[] = $task->id;
-                                if ($variant->print_show_complexity) $meta[] = '💡  ' . $task->complexity;
+                                if ($variant->print_show_complexity) $meta[] = 'сложн. ' . $task->complexity;
                                 echo implode(', ', $meta);
                             @endphp)
                         @endif
@@ -123,18 +137,23 @@
                         </div>
                     @endif
 
-                    <!-- Ответы (Версия учителя) -->
+                    <!-- ВЫВОД РЕШЕНИЙ ИЛИ КЛЕТКИ -->
                     @if($showAnswers)
                         <div class="teacher-version">
                             <strong>ОТВЕТ:</strong> {{ $task->answer_numeric }} {{ $task->answer_units }}<br>
                             <strong>Решение:</strong> {!! nl2br(e($task->author_solution_text)) !!}
                         </div>
+                        <div style="margin-bottom: {{ $variant->print_spacing_lines * 5 }}mm;"></div>
+                    @else
+                        @if($variant->print_spacing_lines > 0)
+                            <!-- Тот самый блок с сеткой -->
+                            <div class="solution-grid"></div>
+                        @endif
                     @endif
                 </div>
             @endforeach
         </div>
 
-        <!-- Добавляем линию отреза только один раз, если у нас 2 экземпляра на страницу -->
         @if ($variant->print_copies_per_page == 2 && $i == 0)
             <div class="cut-line"></div>
         @endif
