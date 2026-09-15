@@ -39,14 +39,19 @@
                                 <!-- Ссылка формируется функцией url(), которая указывает на корень сайта (папку public) -->
                                 <x-dropdown-link :href="url('/phet/phet_all/index.html')" target="_blank">
                                     PhET Симуляции
+                                </x-dropdown-link>                                
+                                <x-dropdown-link :href="url('https://www.physicsclassroom.com/interactive')" target="_blank">
+                                    Physics Classroom
                                 </x-dropdown-link>
-                                
-                                <!-- Пример второй ссылки, можете раскомментировать, когда появится: -->
-                                <!-- 
-                                <x-dropdown-link :href="url('/other-models/index.html')" target="_blank">
-                                    Другие модели
-                                </x-dropdown-link> 
-                                -->
+                                <x-dropdown-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
+                                    Vascak (VPN req.)
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="url('https://javalab.org/en/')" target="_blank">
+                                    Javalab
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
+                                    Симулятор эл. полей
+                                </x-dropdown-link>                                                                                    
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -152,7 +157,18 @@
             <x-responsive-nav-link :href="url('/phet/phet_all/index.html')" target="_blank" class="text-indigo-600">
                 PhET Симуляции ↗
             </x-responsive-nav-link>
-
+            <x-responsive-nav-link :href="url('https://www.physicsclassroom.com/interactive')" target="_blank">
+                Physics Classroom ↗
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
+                Vascak (VPN req.) ↗
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="url('https://javalab.org/en/')" target="_blank">
+                Javalab ↗
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
+                Симулятор эл. полей ↗
+            </x-responsive-nav-link>  
             @auth
                 @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
                     <x-responsive-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">Мой прогресс</x-responsive-nav-link>
