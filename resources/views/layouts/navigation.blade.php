@@ -22,6 +22,35 @@
 
                     <x-nav-link :href="url('/')" :active="request()->is('/')">Справочник</x-nav-link>
 
+                    <div class="hidden sm:flex sm:items-center">
+                        <x-dropdown align="left" width="48">
+                            <x-slot name="trigger">
+                                <button class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out h-16">
+                                    <div>Модели</div>
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <!-- Ссылка формируется функцией url(), которая указывает на корень сайта (папку public) -->
+                                <x-dropdown-link :href="url('/phet/phet_all/index.htm')" target="_blank">
+                                    PhET Симуляции
+                                </x-dropdown-link>
+                                
+                                <!-- Пример второй ссылки, можете раскомментировать, когда появится: -->
+                                <!-- 
+                                <x-dropdown-link :href="url('/other-models/index.html')" target="_blank">
+                                    Другие модели
+                                </x-dropdown-link> 
+                                -->
+                            </x-slot>
+                        </x-dropdown>
+                    </div>
+
                     @auth
                         @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
                             <x-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
@@ -116,6 +145,13 @@
             @endauth
 
             <x-responsive-nav-link :href="url('/')" :active="request()->is('/')">Справочник</x-responsive-nav-link>
+
+            <div class="border-t border-gray-200 my-2"></div>
+            <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-widest font-bold">Интерактивные модели</div>
+            
+            <x-responsive-nav-link :href="url('/phet/phet_all/index.htm')" target="_blank" class="text-indigo-600">
+                PhET Симуляции ↗
+            </x-responsive-nav-link>
 
             @auth
                 @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
