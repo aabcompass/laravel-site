@@ -37,7 +37,7 @@
 
                             <x-slot name="content">
                                 <!-- Ссылка формируется функцией url(), которая указывает на корень сайта (папку public) -->
-                                <x-dropdown-link :href="url('/phet/phet_all/index.htm')" target="_blank">
+                                <x-dropdown-link :href="url('/phet/phet_all/index.html')" target="_blank">
                                     PhET Симуляции
                                 </x-dropdown-link>
                                 
@@ -149,7 +149,7 @@
             <div class="border-t border-gray-200 my-2"></div>
             <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-widest font-bold">Интерактивные модели</div>
             
-            <x-responsive-nav-link :href="url('/phet/phet_all/index.htm')" target="_blank" class="text-indigo-600">
+            <x-responsive-nav-link :href="url('/phet/phet_all/index.html')" target="_blank" class="text-indigo-600">
                 PhET Симуляции ↗
             </x-responsive-nav-link>
 
