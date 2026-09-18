@@ -138,7 +138,9 @@
                             <div class="flex flex-wrap gap-4 mb-4 p-4 bg-gray-50 rounded">
                                 @foreach($task->taskImages as $img)
                                     <div class="relative bg-white border p-2 rounded shadow-sm flex flex-col items-center" style="width: 150px;">
-                                        <img src="{{ asset($img->file_path) }}" class="max-h-24 object-contain mb-2">
+                                        <a href="{{ asset($img->file_path) }}" target="_blank" class="w-full flex justify-center hover:scale-105 transition-transform" title="Открыть в полном размере">
+                                            <img src="{{ asset($img->file_path) }}" class="max-h-24 object-contain mb-2">
+                                        </a>
                                         <span class="text-xs text-gray-500">Масштаб: {{ $img->scale }}%</span>
                                         
                                         <!-- Кнопка удаления картинки -->
@@ -199,7 +201,9 @@
                             <div class="flex flex-wrap gap-4 mb-4 p-4 bg-gray-50 rounded">
                                 @foreach($task->solutionImages as $img)
                                     <div class="relative bg-white border p-2 rounded shadow-sm flex flex-col items-center" style="width: 150px;">
-                                        <img src="{{ asset($img->file_path) }}" class="max-h-24 object-contain mb-2">
+                                        <a href="{{ asset($img->file_path) }}" target="_blank" class="w-full flex justify-center hover:scale-105 transition-transform" title="Открыть в полном размере">
+                                            <img src="{{ asset($img->file_path) }}" class="max-h-24 object-contain mb-2">
+                                        </a>
                                         <span class="text-xs text-gray-500">Масштаб: {{ $img->scale }}%</span>
                                         <button type="button" onclick="deleteAttachment({{ $img->id }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 shadow">&times;</button>
                                     </div>
