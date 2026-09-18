@@ -137,6 +137,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/attachments/{attachment}', [TaskController::class, 'destroyAttachment'])->name('attachments.destroy');
         Route::post('/tasks/{task}/copy', [TaskController::class, 'copy'])->name('tasks.copy');
         Route::resource('works', WorkController::class)->except(['show']);
+        Route::patch('/works/{work}/move/{direction}', [WorkController::class, 'move'])->name('works.move');
         // Варианты работ (Уровень 1)
         Route::get('/works/{work}/variants', [WorkVariantController::class, 'index'])->name('works.variants.index');
         Route::post('/works/{work}/variants', [WorkVariantController::class, 'store'])->name('works.variants.store');

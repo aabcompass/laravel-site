@@ -45,11 +45,6 @@
             </form>
 
             <!-- СПИСОК РАБОТ -->
-            <div class="flex justify-end mb-2">
-                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
-                    ℹ️ Сортировка работ производится по тому, как отсортированы темы в <a href="{{ route('topics.index') }}" class="text-blue-500 hover:underline">справочнике</a>.
-                </span>
-            </div>
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border">
                 <table class="w-full text-sm text-left text-gray-600">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -59,6 +54,7 @@
                             <th class="px-6 py-3">Автор</th>
                             <th class="px-6 py-3 text-center">Вариантов</th>
                             <th class="px-6 py-3 text-right">Действия</th>
+                            <th class="px-6 py-3 w-16 text-center">Порядок</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,6 +107,18 @@
                                         <span class="text-gray-300 cursor-not-allowed" title="{{ $canEdit ? 'Нельзя удалить: внутри есть варианты' : 'Только автор может удалить' }}">Удалить</span>
                                     @endif
                                 </td>
+
+                                <td class="px-6 py-4 text-center whitespace-nowrap">
+                                    <form action="{{ route('works.move', [$work->id, 'up']) }}" method="POST" class="inline m-0">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="w-6 h-6 inline-flex items-center justify-center bg-gray-200 hover:bg-gray-400 text-gray-700 rounded-full transition-colors text-xs shadow-sm" title="Вверх">▲</button>
+                                    </form>
+                                    <form action="{{ route('works.move', [$work->id, 'down']) }}" method="POST" class="inline m-0">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="w-6 h-6 inline-flex items-center justify-center bg-gray-200 hover:bg-gray-400 text-gray-700 rounded-full transition-colors text-xs shadow-sm" title="Вниз">▼</button>
+                                    </form>
+                                </td>
+
                             </tr>
                         @empty
                             <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Работы не найдены. Создайте первую!</td></tr>

@@ -9,7 +9,7 @@ class Work extends Model
     protected $table = 'Works';
     public $timestamps = false; // У вас в БД есть только created_at
 
-    protected $fillable = ['topic_id', 'author_id', 'title', 'description', 'grade'];
+    protected $fillable = ['topic_id', 'author_id', 'title', 'description', 'grade', 'sorting_num'];
 
     // Работа принадлежит теме
     public function topic() {
