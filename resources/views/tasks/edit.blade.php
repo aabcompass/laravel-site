@@ -119,7 +119,7 @@
                         <!-- Поле ввода -->
                         <div>
                             <label class="block font-medium text-sm text-gray-700 mb-1">Текст (LaTeX)</label>
-                            <textarea id="task_text" name="task_text" rows="8" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Введите условие...">{{ old('task_text', $task->task_text ?? '') }}</textarea>
+                            <textarea id="task_text" name="task_text" onpaste="handlePaste(event, 'task_files_container', 'task_images')" rows="8" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Введите условие (можно вставлять картинки через Ctrl+V)...">{{ old('task_text', $task->task_text ?? '') }}</textarea>
                         </div>
                         
                         <!-- Живой предпросмотр -->
@@ -185,7 +185,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
                             <label class="block font-medium text-sm text-gray-700 mb-1">Авторское решение (LaTeX)</label>
-                            <textarea id="solution_text" name="author_solution_text" rows="8" class="w-full border-gray-300 rounded-md shadow-sm">{{ old('author_solution_text', $task->author_solution_text ?? '') }}</textarea>
+                            <textarea id="solution_text" name="author_solution_text" onpaste="handlePaste(event, 'solution_files_container', 'solution_images')" rows="8" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Введите решение (можно вставлять картинки через Ctrl+V)...">{{ old('author_solution_text', $task->author_solution_text ?? '') }}</textarea>
                         </div>
                         <div class="bg-gray-50 border rounded-md p-4 flex flex-col">
                             <span class="text-xs text-gray-500 uppercase font-bold mb-2">Предпросмотр решения</span>
@@ -284,14 +284,17 @@
         });
 
         // 4. Добавление новых полей для файлов
-        function addFileInput(containerId, inputName) {
+// 4. Добавление новых полей для файлов (модифицировано для поддержки вставки)
+        function addFileInput(containerId, inputName, pastedFile = null) {
             const container = document.getElementById(containerId);
-            // Определяем цвет фона в зависимости от того, куда добавляем
             const bgColorClass = inputName === 'task_images' ? 'bg-blue-50' : 'bg-purple-50';
             
+            // Генерируем уникальный ID для инпута, чтобы к нему обратиться
+            const uniqueId = 'file_input_' + Math.random().toString(36).substr(2, 9);
+            
             const html = `
-                <div class="flex items-center gap-4 ${bgColorClass} p-3 rounded mt-2">
-                    <input type="file" name="${inputName}[]" class="text-sm">
+                <div class="flex items-center gap-4 ${bgColorClass} p-3 rounded mt-2 border-2 border-transparent transition-colors" id="wrapper_${uniqueId}">
+                    <input type="file" name="${inputName}[]" id="${uniqueId}" class="text-sm">
                     <label class="text-sm text-gray-600 flex items-center gap-2">
                         Масштаб (%): <input type="number" name="${inputName}_scales[]" value="30" min="1" max="100" class="w-20 border-gray-300 rounded p-1">
                     </label>
@@ -299,6 +302,23 @@
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
+
+            // Если файл был передан из буфера обмена (Ctrl+V)
+            if (pastedFile) {
+                const fileInput = document.getElementById(uniqueId);
+                const dt = new DataTransfer();
+                dt.items.add(pastedFile);
+                fileInput.files = dt.files; // Магия: программно вставляем файл в input
+                
+                // Подсвечиваем блок зеленым на секунду, чтобы было видно, что вставка прошла успешно
+                const wrapper = document.getElementById('wrapper_' + uniqueId);
+                wrapper.classList.remove('border-transparent');
+                wrapper.classList.add('border-green-400');
+                setTimeout(() => {
+                    wrapper.classList.remove('border-green-400');
+                    wrapper.classList.add('border-transparent');
+                }, 1500);
+            }
         }
 
         // 5. Удаление существующих картинок (используем форму-невидимку)
@@ -309,5 +329,23 @@
                 form.submit();
             }
         }
+        
+        // НОВОЕ: 6. Обработка вставки из буфера обмена (Ctrl+V)
+        function handlePaste(e, containerId, inputName) {
+            // Получаем элементы буфера обмена
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            
+            for (let index in items) {
+                const item = items[index];
+                // Если это файл и это картинка
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    e.preventDefault(); // Останавливаем стандартную вставку текста (в виде base64)
+                    const file = item.getAsFile();
+                    
+                    // Вызываем нашу функцию добавления поля и передаем в неё файл
+                    addFileInput(containerId, inputName, file);
+                }
+            }
+        } 
     </script>
 </x-app-layout>
