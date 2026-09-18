@@ -87,7 +87,7 @@ class StudentRewardController extends Controller
             'reward_id' => $request->reward_id,
             'teacher_id' => auth()->id(),
             'reason' => $request->reason, // <- Сохраняем причину
-            'is_accounted' => true,
+            'is_accounted' => false,
             'is_handed_over' => true,
             'created_at' => \Carbon\Carbon::parse($request->date)->setTime(12, 0, 0),
         ]);
