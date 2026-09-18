@@ -123,7 +123,7 @@
                                 
                                 <div class="flex-1 text-sm">
                                     <div class="mb-1 flex items-center gap-2 flex-wrap">
-                                        <span class="font-bold text-gray-800">№{{ $task->id }}</span>
+                                        <a href="{{ route('tasks.edit', $task->id) }}" target="_blank" class="font-bold text-blue-600 hover:text-blue-800 hover:underline transition">№{{ $task->id }}</a>
                                         <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">⭐ {{ $task->complexity }}</span>
                                         <span class="text-xs text-gray-500">📂 {{ $task->topic->name ?? '' }}</span>
                                         
@@ -186,7 +186,7 @@
                                 <div class="flex-1 text-sm pr-6">
                                     <div class="mb-1 flex items-center gap-2 flex-wrap">
                                         <span class="font-black text-indigo-600 text-base border-r-2 border-indigo-200 pr-2 mr-1">{{ $loop->iteration }}.</span>
-                                        <span class="font-bold text-gray-800 text-xs">№{{ $task->id }}</span>
+                                        <a href="{{ route('tasks.edit', $task->id) }}" target="_blank" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-xs transition">№{{ $task->id }}</a>
                                         <span class="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">⭐{{ $task->complexity }}</span>
                                     </div>
                                     
