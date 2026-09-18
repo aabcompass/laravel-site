@@ -136,7 +136,7 @@
                             <!-- Шапка карточки (Супер компактная) -->
                             <div class="flex justify-between items-center p-2.5 border-b bg-gray-50 rounded-t-lg">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-bold text-gray-800 text-sm">№{{ $task->id }}</span>
+                                    <a href="{{ route('tasks.edit', $task->id) }}" target="_blank" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-sm transition">№{{ $task->id }}</a>
                                     
                                     <span class="text-xs font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded" title="Сложность">
                                         ⭐ {{ $task->complexity }}
