@@ -14,12 +14,17 @@ class PublicController extends Controller
     public function showVariant($hash)
     {
         // Ищем вариант по хэшу. Если не найден - отдаем 404
-        $variant = WorkVariant::where('public_hash', $hash)->firstOrFail();
+        $variant = \App\Models\WorkVariant::where('public_hash', $hash)->firstOrFail();
         
         // Подгружаем задачи и картинки
         $variantTasks = $variant->tasks()->with('taskImages')->get();
 
-        return view('public.variant', compact('variant', 'variantTasks'));
+        // Для печатного шаблона требуются дополнительные переменные:
+        $showAnswers = false; // Публичная ссылка всегда без ответов (для безопасности)
+        $group = null;        // Без привязки к конкретной группе в шапке
+
+        // Отдаем шаблон печати!
+        return view('variants.print', compact('variant', 'variantTasks', 'showAnswers', 'group'));
     }
 
     /**
