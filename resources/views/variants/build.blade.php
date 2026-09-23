@@ -183,9 +183,9 @@
                                     </div>
                                 @endif
 
-                                <div class="flex-1 text-sm pr-6">
+                                <div class="flex-1 text-sm pr-24">
                                     <div class="mb-1 flex items-center gap-2 flex-wrap">
-                                        <span class="font-black text-indigo-600 text-base border-r-2 border-indigo-200 pr-2 mr-1">{{ $loop->iteration }}.</span>
+                                        <span class="task-number-index font-black text-indigo-600 text-base border-r-2 border-indigo-200 pr-2 mr-1">{{ $loop->iteration }}.</span>
                                         <a href="{{ route('tasks.edit', $task->id) }}" target="_blank" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-xs transition">№{{ $task->id }}</a>
                                         <span class="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">⭐{{ $task->complexity }}</span>
                                     </div>
@@ -235,21 +235,38 @@
                                     @endif
                                 </div>
 
-                                <!-- AJAX КНОПКА УДАЛЕНИЯ -->
+                                <!-- КНОПКИ УПРАВЛЕНИЯ (ВВЕРХ/ВНИЗ/УДАЛИТЬ) -->
                                 @if(!$isReadOnly)
-                                    <button type="button" 
-                                        @click="if(confirm('Убрать из варианта?')) {
-                                            fetch('{{ route('variants.detach', [$variant->id, $task->id]) }}', {
-                                                method: 'DELETE',
-                                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
-                                            }).then(() => { 
-                                                $el.closest('.variant-task-item').remove(); 
-                                                taskCount--; 
-                                            });
-                                        }" 
-                                        class="absolute top-2 right-2 text-gray-300 hover:bg-red-100 hover:text-red-600 rounded w-6 h-6 flex items-center justify-center font-bold transition-colors" title="Убрать из варианта">
-                                        &times;
-                                    </button>
+                                    <div class="absolute top-2 right-2 flex items-center gap-1">
+                                        <!-- Кнопка В начало -->
+                                        <button type="button" onclick="moveTaskToEdge(this, 'top')" class="text-gray-400 hover:bg-indigo-100 hover:text-indigo-600 rounded w-7 h-7 flex items-center justify-center transition-colors" title="Переместить в самое начало">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7"></path></svg>
+                                        </button>
+                                        
+                                        <!-- Кнопка В конец -->
+                                        <button type="button" onclick="moveTaskToEdge(this, 'bottom')" class="text-gray-400 hover:bg-indigo-100 hover:text-indigo-600 rounded w-7 h-7 flex items-center justify-center transition-colors" title="Переместить в самый конец">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7"></path></svg>
+                                        </button>
+
+                                        <!-- Кнопка Удалить (улучшенная) -->
+                                        <button type="button" 
+                                            @click="if(confirm('Убрать из варианта?')) {
+                                                fetch('{{ route('variants.detach', [$variant->id, $task->id]) }}', {
+                                                    method: 'DELETE',
+                                                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                                                }).then(() => { 
+                                                    $el.closest('.variant-task-item').remove(); 
+                                                    taskCount--; 
+                                                    document.querySelectorAll('#variant-task-list .variant-task-item').forEach((node, idx) => {
+                                                        let span = node.querySelector('.task-number-index');
+                                                        if(span) span.textContent = (idx + 1) + '.';
+                                                    });
+                                                });
+                                            }" 
+                                            class="text-gray-400 hover:bg-red-100 hover:text-red-600 rounded w-7 h-7 flex items-center justify-center font-bold transition-colors text-lg pb-1" title="Убрать из варианта">
+                                            &times;
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
                         @empty
@@ -283,6 +300,49 @@
                 alert('Ошибка при сохранении настройки.');
             }
         }
+
+        // Функция для перемещения задачи в начало/конец
+        function moveTaskToEdge(btn, position) {
+            const item = btn.closest('.variant-task-item');
+            const list = document.getElementById('variant-task-list');
+            
+            // Запоминаем текущую позицию прокрутки
+            const currentScroll = list.scrollTop;
+            
+            // Перемещаем элемент в DOM
+            if (position === 'top') {
+                list.insertBefore(item, list.firstElementChild);
+            } else {
+                list.appendChild(item);
+            }
+            
+            // Анимация подсветки
+            item.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-50');
+            setTimeout(() => item.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-50'), 1000);
+
+            // Пересчитываем нумерацию и готовим форму сохранения
+            const form = document.getElementById('reorder-form');
+            const inputsContainer = document.getElementById('reorder-inputs');
+            inputsContainer.innerHTML = '';
+            
+            const items = list.querySelectorAll('.variant-task-item');
+            items.forEach((node, index) => {
+                const numSpan = node.querySelector('.task-number-index');
+                if (numSpan) numSpan.textContent = (index + 1) + '.';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'task_order[]';
+                input.value = node.dataset.id;
+                inputsContainer.appendChild(input);
+            });
+            
+            form.classList.remove('hidden');
+            
+            // Важно: мы удалили scrollIntoView, поэтому страница больше не прыгает.
+            // Но при перемещении вверх сам DOM может сдвинуть список, поэтому жестко возвращаем скролл на место:
+            list.scrollTop = currentScroll;
+        }
     </script>
 
     @if(!$isReadOnly && $variantTasks->count() > 0)
@@ -298,7 +358,12 @@
                         const inputsContainer = document.getElementById('reorder-inputs');
                         inputsContainer.innerHTML = '';
                         const items = el.querySelectorAll('.variant-task-item');
-                        items.forEach(item => {
+                        
+                        items.forEach((item, index) => {
+                            // Динамически обновляем визуальный порядковый номер
+                            const numSpan = item.querySelector('.task-number-index');
+                            if (numSpan) numSpan.textContent = (index + 1) + '.';
+
                             const input = document.createElement('input');
                             input.type = 'hidden';
                             input.name = 'task_order[]';
