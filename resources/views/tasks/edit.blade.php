@@ -38,8 +38,8 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6">
+        <div class="max-w-[1920px] mx-auto sm:px-6 lg:px-8">
             
             @if (session('success'))
                 <div class="mb-6 p-4 bg-green-100 text-green-700 rounded shadow-sm">
@@ -63,7 +63,7 @@
                 <div class="bg-white shadow sm:rounded-lg p-6">
                     <h3 class="text-lg font-bold border-b pb-2 mb-4">Основные параметры</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         <div>
                             <label class="block font-medium text-sm text-gray-700">Тема <span class="text-red-500">*</span></label>
                             <select name="topic_id" class="mt-1 w-full border-gray-300 rounded-md shadow-sm" required>
@@ -167,7 +167,7 @@
                 <div class="bg-white shadow sm:rounded-lg p-6">
                     <h3 class="text-lg font-bold border-b pb-2 mb-4">Ответ и Решение</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div>
                             <label class="block font-medium text-sm text-gray-700">Численный ответ</label>
                             <input type="number" step="any" name="answer_numeric" value="{{ old('answer_numeric', $task->answer_numeric ?? '') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
@@ -176,7 +176,7 @@
                             <label class="block font-medium text-sm text-gray-700">Единицы измерения</label>
                             <input type="text" name="answer_units" value="{{ old('answer_units', $task->answer_units ?? '') }}" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
                         </div>
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 lg:col-span-2">
                             <label class="block font-medium text-sm text-gray-700">Подсказка</label>
                             <textarea name="advice_text" rows="2" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">{{ old('advice_text', $task->advice_text ?? '') }}</textarea>
                         </div>
