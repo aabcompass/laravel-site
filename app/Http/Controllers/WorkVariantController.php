@@ -388,4 +388,72 @@ class WorkVariantController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Экспорт варианта в файл LaTeX (.tex)
+     */
+    public function exportLatex(WorkVariant $variant)
+    {
+        // Проверка прав (Автор или Админ)
+        if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) {
+            abort(403);
+        }
+
+        // Получаем задачи в правильном порядке
+        $variantTasks = $variant->tasks()->with('taskImages')->get();
+
+        // Формируем базовую преамбулу LaTeX
+        $latex = "% Сгенерировано в PhysRays\n";
+        $latex .= "\\documentclass[12pt,a4paper]{article}\n";
+        $latex .= "\\usepackage[utf8]{inputenc}\n";
+        $latex .= "\\usepackage[T2A]{fontenc}\n";
+        $latex .= "\\usepackage[russian]{babel}\n";
+        $latex .= "\\usepackage{amsmath, amssymb, graphicx}\n";
+        $latex .= "\\usepackage[margin=2cm]{geometry}\n\n";
+        $latex .= "\\begin{document}\n\n";
+
+        // Шапка варианта
+        $workTitle = $variant->work->title ?? 'Работа';
+        $latex .= "\\begin{center}\n";
+        $latex .= "\\Large\\textbf{" . $workTitle . "} \\\\\n";
+        $latex .= "\\vspace{0.5em}\n";
+        $latex .= "\\large{" . $variant->name . "}\n";
+        $latex .= "\\end{center}\n\n";
+
+        if ($variant->print_instructions) {
+            $latex .= "\\textit{" . $variant->print_instructions . "}\n\\vspace{1em}\n\n";
+        }
+
+        // Перебираем задачи
+        foreach ($variantTasks as $index => $task) {
+            $num = $index + 1;
+            
+            // Если есть картинки, добавляем закомментированную подсказку
+            if ($task->taskImages->count() > 0) {
+                $latex .= "% [!] Внимание: к этой задаче прикреплены изображения на сайте.\n";
+                foreach ($task->taskImages as $img) {
+                    $filename = basename($img->file_path);
+                    $latex .= "% \\includegraphics[width=0.4\\textwidth]{{$filename}}\n";
+                }
+            }
+
+            $latex .= "\\textbf{Задача {$num}.} ";
+            
+            // Берем текст задачи. Для LaTeX пустая строка = новый абзац.
+            $text = str_replace("\r\n", "\n", $task->task_text);
+            $latex .= $text . "\n\n";
+            $latex .= "\\vspace{1em}\n\n";
+        }
+
+        $latex .= "\\end{document}\n";
+
+        // Формируем имя файла
+        $filename = 'variant_' . $variant->id . '_latex.tex';
+
+        return response()->streamDownload(function () use ($latex) {
+            echo $latex;
+        }, $filename, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+        ]);
+    }
 }

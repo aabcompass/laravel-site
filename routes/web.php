@@ -154,6 +154,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/variants/{variant}/print-config', [WorkVariantController::class, 'printConfig'])->name('variants.printConfig');
         Route::put('/variants/{variant}/print-config', [WorkVariantController::class, 'updatePrintConfig'])->name('variants.updatePrintConfig');
         Route::get('/variants/{variant}/print', [WorkVariantController::class, 'print'])->name('variants.print');
+        //LaTeX variant
+        Route::get('/variants/{variant}/print', [WorkVariantController::class, 'print'])->name('variants.print');
+        // НОВЫЙ МАРШРУТ:
+        Route::get('/variants/{variant}/latex', [WorkVariantController::class, 'exportLatex'])->name('variants.latex');
         // Выдача и отзыв вариантов
         Route::post('/variants/{variant}/assign', [WorkVariantController::class, 'assignToGroup'])->name('variants.assign');
         Route::delete('/variants/assignments/{history}', [WorkVariantController::class, 'revokeFromGroup'])->name('variants.revoke');

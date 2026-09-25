@@ -126,6 +126,8 @@
 
                                             <a href="{{ route('variants.printConfig', $variant->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-b">🖨 Печать</a>
 
+                                            <a href="{{ route('variants.latex', $variant->id) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b">📜 Экспорт в LaTeX (.tex)</a>
+                                            
                                             <form action="{{ route('variants.clone', $variant->id) }}" method="POST">
                                                 @csrf
                                                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">⧉ Клонировать (Себе)</button>
