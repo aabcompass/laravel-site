@@ -22,14 +22,29 @@
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Поиск по названию</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Например: Кинематика..." class="w-full border-gray-300 rounded text-sm py-1.5 shadow-sm">
                 </div>
-                <div class="flex-1 min-w-[150px]">
+                <div class="flex-1 min-w-[200px] max-w-[280px]">
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Класс</label>
-                    <select name="grade" class="w-full border-gray-300 rounded text-sm py-1.5 shadow-sm">
-                        <option value="">-- Все --</option>
+                    
+                    <!-- Переключатель (Segmented Control) -->
+                    <div class="flex bg-gray-100 p-0.5 rounded border border-gray-300 shadow-sm h-[38px]">
+                        <!-- Кнопка "Все" -->
+                        <label class="flex-1 relative cursor-pointer">
+                            <input type="radio" name="grade" value="" class="hidden" onchange="this.form.submit()" {{ request('grade') == '' ? 'checked' : '' }}>
+                            <div class="h-full flex items-center justify-center text-sm rounded transition-all {{ request('grade') == '' ? 'bg-white shadow font-bold text-blue-600' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200' }}">
+                                Все
+                            </div>
+                        </label>
+                        
+                        <!-- Кнопки 7-11 -->
                         @for($i=7; $i<=11; $i++)
-                            <option value="{{ $i }}" {{ request('grade') == $i ? 'selected' : '' }}>{{ $i }} класс</option>
+                            <label class="flex-1 relative cursor-pointer">
+                                <input type="radio" name="grade" value="{{ $i }}" class="hidden" onchange="this.form.submit()" {{ request('grade') == $i ? 'checked' : '' }}>
+                                <div class="h-full flex items-center justify-center text-sm rounded transition-all {{ request('grade') == $i ? 'bg-white shadow font-bold text-blue-600' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200' }}">
+                                    {{ $i }}
+                                </div>
+                            </label>
                         @endfor
-                    </select>
+                    </div>
                 </div>
                 <div class="flex-1 min-w-[250px]">
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Тема</label>
