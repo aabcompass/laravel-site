@@ -311,4 +311,25 @@ class StudentRewardController extends Controller
         $studentReward->update(['is_handed_over' => !$studentReward->is_handed_over]);
         return response()->json(['success' => true, 'is_handed_over' => $studentReward->is_handed_over]);
     }
+
+/**
+     * Личная страница наград ученика (только для advanced_student)
+     */
+    public function myRewards()
+    {
+        $student = auth()->user();
+
+        // Защита: пускаем только продвинутых учеников
+        if (!$student->hasRole('advanced_student')) {
+            abort(403, 'Эта страница доступна только ученикам продвинутых групп.');
+        }
+
+        // Оставили только загрузку самой награды, увеличили пагинацию до 50
+        $rewards = StudentReward::where('student_id', $student->id)
+            ->with(['reward'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return view('rewards.my', compact('rewards'));
+    }
 };

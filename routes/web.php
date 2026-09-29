@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/assignments/{assignment}/attachments/{attachment}', [StudentAssignmentController::class, 'destroyAttachment'])->name('assignments.attachments.destroy');
     Route::post('/student/variants/{variant}/tasks/{task}/self-assign', [StudentAssignmentController::class, 'selfAssign'])->name('student.selfAssign');
     Route::get('/claim-reward/{hash}', [\App\Http\Controllers\StudentRewardController::class, 'claimQr'])->name('rewards.claim');
+    Route::get('/my-rewards', [\App\Http\Controllers\StudentRewardController::class, 'myRewards'])->name('rewards.my');
     
     // === ЗОНА АДМИНА (Только для 'admin') ===
     Route::middleware('can:manage-references')->group(function () {

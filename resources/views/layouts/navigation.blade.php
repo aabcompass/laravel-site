@@ -58,9 +58,8 @@
 
                     @auth
                         @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
-                            <x-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">
-                                Мой прогресс
-                            </x-nav-link>
+                            <x-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">Мой прогресс</x-nav-link>
+                            <x-nav-link :href="route('rewards.my')" :active="request()->routeIs('rewards.my')">Мои награды</x-nav-link>
                         @endif
 
                         @can('use-tasks')
@@ -172,6 +171,7 @@
             @auth
                 @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
                     <x-responsive-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">Мой прогресс</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('rewards.my')" :active="request()->routeIs('rewards.my')">Мои награды</x-responsive-nav-link>
                 @endif
 
                 @can('use-tasks')
