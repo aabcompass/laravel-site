@@ -52,7 +52,10 @@
                                 <x-dropdown-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
                                     Симулятор эл. полей
                                 </x-dropdown-link>                                                                                    
-                            </x-slot>
+                                <x-dropdown-link :href="url('https://xumuk.ru/tm/')" target="_blank">
+                                    Интерактивная таблица Менделеева
+                                </x-dropdown-link>                                                                                    
+                           </x-slot>
                         </x-dropdown>
                     </div>
 
@@ -167,7 +170,10 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
                 Симулятор эл. полей ↗
-            </x-responsive-nav-link>  
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="url('https://xumuk.ru/tm/')" target="_blank">
+                Интерактивная таблица Менделеева
+            </x-responsive-nav-link>    
             @auth
                 @if(auth()->user()->hasRole('advanced_student') || auth()->user()->hasRole('student'))
                     <x-responsive-nav-link :href="route('assignments.progress')" :active="request()->routeIs('assignments.progress')">Мой прогресс</x-responsive-nav-link>
