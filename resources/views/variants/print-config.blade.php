@@ -1,4 +1,5 @@
 <x-app-layout>
+    <style> [x-cloak] { display: none !important; } </style>
     <x-slot name="header">
         <div class="flex items-center gap-4">
             <a href="{{ route('works.variants.index', $variant->work_id) }}" class="text-gray-500 hover:text-blue-600 transition">&larr; К списку вариантов</a>
@@ -14,8 +15,15 @@
             @if (session('success')) <div class="p-4 bg-green-100 text-green-700 rounded-lg shadow-sm font-bold">{{ session('success') }}</div> @endif
             @if (session('error')) <div class="p-4 bg-red-100 text-red-700 rounded-lg shadow-sm font-bold">{{ session('error') }}</div> @endif
 
-            <form action="{{ route('variants.updatePrintConfig', $variant->id) }}" method="POST" class="bg-white shadow sm:rounded-lg overflow-hidden border">
+            <form x-data="autoSaveForm()" x-ref="form" @input="triggerSave()" @change="triggerSave()" @submit.prevent class="relative bg-white shadow sm:rounded-lg overflow-hidden border">
                 @csrf @method('PUT')
+
+                <!-- Индикатор автосохранения -->
+                <div class="absolute top-6 right-6 flex items-center gap-2 text-sm font-bold z-10">
+                    <span x-show="status === 'saving'" x-cloak class="text-blue-500 animate-pulse">Сохранение...</span>
+                    <span x-show="status === 'saved'" x-cloak x-transition.opacity class="text-green-500">Сохранено ✓</span>
+                    <span x-show="status === 'error'" x-cloak class="text-red-500">Ошибка сохранения</span>
+                </div>
 
                 <!-- БЛОК 1: Тексты (Сохраняются в БД) -->
                 <div class="p-6 border-b bg-gray-50">
@@ -91,12 +99,6 @@
                     </div>
                 </div>
 
-                <!-- БЛОК 3: Отправка на принтер -->
-                <div class="p-6 bg-gray-50 flex items-center justify-between">
-                    <button type="submit" class="text-blue-600 hover:underline text-sm font-bold">
-                        💾 Сохранить настройки в базу
-                    </button>
-                </div>
             </form>
 
             <!-- ФОРМА ОТПРАВКИ НА ПЕЧАТЬ (Открывается в новой вкладке) -->
@@ -125,10 +127,50 @@
                 </div>
 
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow text-lg transition whitespace-nowrap">
-                    🖨 Сформировать PDF
+                    Показать
                 </button>
             </form>
 
         </div>
     </div>
+
+    <script>
+        function autoSaveForm() {
+            return {
+                status: 'idle', // idle, saving, saved, error
+                timer: null,
+                
+                triggerSave() {
+                    this.status = 'saving';
+                    clearTimeout(this.timer);
+                    // Ждем 750мс после последнего действия перед отправкой
+                    this.timer = setTimeout(() => this.executeSave(), 750);
+                },
+                
+                async executeSave() {
+                    try {
+                        let formData = new FormData(this.$refs.form);
+                        let res = await fetch('{{ route('variants.updatePrintConfig', $variant->id) }}', {
+                            method: 'POST', // Отправляем POST, но Laravel увидит _method=PUT внутри FormData
+                            body: formData,
+                            headers: { 
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json' 
+                            }
+                        });
+                        
+                        if (res.ok) {
+                            this.status = 'saved';
+                            // Убираем галочку успеха через 2 секунды
+                            setTimeout(() => { if(this.status === 'saved') this.status = 'idle'; }, 2000);
+                        } else {
+                            this.status = 'error';
+                        }
+                    } catch (e) {
+                        this.status = 'error';
+                    }
+                }
+            }
+        }
+    </script>
 </x-app-layout>
