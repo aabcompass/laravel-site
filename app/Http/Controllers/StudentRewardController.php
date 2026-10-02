@@ -16,7 +16,7 @@ class StudentRewardController extends Controller
      */
     public function journal(Request $request)
     {
-        $dateFrom = $request->input('date_from', \Carbon\Carbon::now()->subMonth()->format('Y-m-d'));
+        $dateFrom = $request->input('date_from', \Carbon\Carbon::now()->subDays(75)->format('Y-m-d'));
         $groupId = $request->input('group_id');
 
         $groups = \App\Models\Group::orderBy('grade')->orderBy('name')->get();

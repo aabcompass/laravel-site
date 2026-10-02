@@ -44,31 +44,43 @@
             @if (session('success')) <div class="mb-4 p-4 bg-green-100 text-green-700 rounded shadow-sm font-bold">{{ session('success') }}</div> @endif
             @if (session('error')) <div class="mb-4 p-4 bg-red-100 text-red-700 rounded shadow-sm font-bold">{{ session('error') }}</div> @endif
 
-            <!-- ФИЛЬТРЫ -->
-            <form method="GET" action="{{ route('rewards.journal') }}" class="bg-white p-4 rounded-lg shadow-sm border mb-4 flex flex-wrap gap-4 items-end">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block font-medium text-sm text-gray-700 mb-1">Группа</label>
-                    <select name="group_id" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500" required onchange="this.form.submit()">
-                        <option value="">-- Выберите группу --</option>
+            <!-- ФИЛЬТРЫ И КНОПКИ ГРУПП -->
+            <form method="GET" action="{{ route('rewards.journal') }}" class="bg-white p-5 rounded-lg shadow-sm border mb-4 space-y-5">
+                
+                <!-- Блок кнопок выбора группы -->
+                <div>
+                    <label class="block font-bold text-sm text-gray-800 mb-3">Выберите группу:</label>
+                    <div class="flex flex-wrap gap-2">
                         @foreach($groups as $group)
-                            <option value="{{ $group->id }}" {{ $groupId == $group->id ? 'selected' : '' }}>
-                                {{ $group->grade ? $group->grade.' кл - ' : '' }}{{ $group->name }}
-                            </option>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="group_id" value="{{ $group->id }}" class="hidden" onchange="this.form.submit()" {{ $groupId == $group->id ? 'checked' : '' }}>
+                                <div class="px-4 py-2 text-sm rounded-md transition-all shadow-sm border 
+                                    {{ $groupId == $group->id 
+                                        ? 'bg-indigo-600 border-indigo-700 text-white font-bold ring-2 ring-indigo-300 ring-offset-1' 
+                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900' 
+                                    }}">
+                                    {{ $group->grade ? $group->grade.' кл - ' : '' }}{{ $group->name }}
+                                </div>
+                            </label>
                         @endforeach
-                    </select>
+                    </div>
                 </div>
 
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block font-medium text-sm text-gray-700 mb-1">Показывать начиная с даты:</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500" required onchange="this.form.submit()">
-                </div>
-                
-                <div class="flex gap-2">
-                    <button type="submit" class="bg-gray-800 text-white rounded px-4 py-1.5 hover:bg-gray-700 shadow">Применить</button>
-                    <!-- КНОПКА ВЫЗОВА МОДАЛКИ QR -->
-                    <button type="button" @click="qrModalOpen = true" class="bg-indigo-600 text-white rounded px-4 py-1.5 hover:bg-indigo-700 shadow font-bold flex items-center gap-1 transition">
-                        🎁 Создать QR-награду
-                    </button>
+                <!-- Нижняя панель с датой и кнопками -->
+                <div class="flex flex-wrap items-end gap-4 border-t border-gray-100 pt-4">
+                    <div class="min-w-[200px]">
+                        <label class="block font-medium text-sm text-gray-700 mb-1">Показывать начиная с даты:</label>
+                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500" required onchange="this.form.submit()">
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-gray-800 text-white rounded px-4 py-1.5 hover:bg-gray-700 shadow transition text-sm font-bold">Обновить</button>
+                        
+                        <!-- КНОПКА ВЫЗОВА МОДАЛКИ QR -->
+                        <button type="button" @click="qrModalOpen = true" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded px-4 py-1.5 hover:from-purple-600 hover:to-indigo-700 shadow font-bold flex items-center gap-1 transition text-sm">
+                            🎁 Создать QR-награду
+                        </button>
+                    </div>
                 </div>
             </form>
 
@@ -87,19 +99,25 @@
                                 </th>
                                 
                                 @forelse($uniqueColumns as $col)
-                                    <th class="px-2 py-3 border-r align-bottom w-12 hover:bg-gray-200 transition-colors group/th">
-                                        <!-- Блок с высотой и поворотом текста снизу-вверх -->
-                                        <div class="flex flex-col items-center justify-end h-40 w-10">
-                                            <div class="[writing-mode:vertical-rl] rotate-180 flex items-center gap-2">
-                                                <span class="font-bold text-gray-900 whitespace-nowrap">{{ \Carbon\Carbon::parse($col['date'])->format('d.m.Y') }}</span>
+                                    <!-- Ширина увеличена до w-14 для двух строк -->
+                                    <th class="px-2 py-3 border-r align-bottom w-14 hover:bg-gray-200 transition-colors group/th">
+                                        <div class="flex items-end justify-center h-40 w-full pb-2">
+                                            <!-- Два div'a внутри vertical-rl создают две параллельные линии текста -->
+                                            <div class="[writing-mode:vertical-rl] rotate-180 text-left">
                                                 
-                                                <!-- Причина и кнопка редактирования -->
-                                                <span class="text-[10px] font-normal text-gray-500 whitespace-nowrap flex items-center gap-1 cursor-pointer hover:text-blue-600" 
+                                                <!-- Строка 1: Дата -->
+                                                <div class="font-bold text-gray-900 whitespace-nowrap tracking-wider leading-tight">
+                                                    {{ \Carbon\Carbon::parse($col['date'])->format('d.m.Y') }}
+                                                </div>
+                                                
+                                                <!-- Строка 2: Причина и карандашик -->
+                                                <div class="text-[10px] font-normal text-gray-500 whitespace-nowrap flex items-center gap-1 cursor-pointer hover:text-blue-600 leading-tight" 
                                                       @click="openEditReasonModal('{{ $col['date'] }}', '{{ addslashes($col['reason']) }}')" title="Изменить причину для колонки">
                                                     {{ $col['reason'] ?: 'Без описания' }}
                                                     <!-- Иконка карандаша (появляется при наведении) -->
                                                     <svg class="w-3 h-3 opacity-0 group-hover/th:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                                </span>
+                                                </div>
+
                                             </div>
                                         </div>
                                     </th>
