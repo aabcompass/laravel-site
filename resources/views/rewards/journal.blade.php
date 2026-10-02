@@ -45,10 +45,11 @@
             @if (session('error')) <div class="mb-4 p-4 bg-red-100 text-red-700 rounded shadow-sm font-bold">{{ session('error') }}</div> @endif
 
             <!-- ФИЛЬТРЫ И КНОПКИ ГРУПП -->
-            <form method="GET" action="{{ route('rewards.journal') }}" class="bg-white p-5 rounded-lg shadow-sm border mb-4 space-y-5">
+            <!-- Используем flex-row и justify-between для разнесения блоков по краям экрана -->
+            <form method="GET" action="{{ route('rewards.journal') }}" class="bg-white p-5 rounded-lg shadow-sm border mb-4 flex flex-col xl:flex-row justify-between xl:items-end gap-5">
                 
-                <!-- Блок кнопок выбора группы -->
-                <div>
+                <!-- Левый блок: Кнопки выбора группы -->
+                <div class="flex-1">
                     <label class="block font-bold text-sm text-gray-800 mb-3">Выберите группу:</label>
                     <div class="flex flex-wrap gap-2">
                         @foreach($groups as $group)
@@ -59,16 +60,17 @@
                                         ? 'bg-indigo-600 border-indigo-700 text-white font-bold ring-2 ring-indigo-300 ring-offset-1' 
                                         : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900' 
                                     }}">
-                                    {{ $group->grade ? $group->grade.' кл - ' : '' }}{{ $group->name }}
+                                    <!-- Оставили только имя группы -->
+                                    {{ $group->name }}
                                 </div>
                             </label>
                         @endforeach
                     </div>
                 </div>
 
-                <!-- Нижняя панель с датой и кнопками -->
-                <div class="flex flex-wrap items-end gap-4 border-t border-gray-100 pt-4">
-                    <div class="min-w-[200px]">
+                <!-- Правый блок: Дата и кнопки действий -->
+                <div class="flex flex-wrap items-end gap-3">
+                    <div class="min-w-[180px]">
                         <label class="block font-medium text-sm text-gray-700 mb-1">Показывать начиная с даты:</label>
                         <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border-gray-300 rounded shadow-sm py-1.5 focus:ring-blue-500" required onchange="this.form.submit()">
                     </div>
@@ -99,9 +101,9 @@
                                 </th>
                                 
                                 @forelse($uniqueColumns as $col)
-                                    <!-- Ширина увеличена до w-14 для двух строк -->
                                     <th class="px-2 py-3 border-r align-bottom w-14 hover:bg-gray-200 transition-colors group/th">
-                                        <div class="flex items-end justify-center h-40 w-full pb-2">
+                                        <!-- УМЕНЬШИЛИ ВЫСОТУ С h-40 (160px) до h-28 (112px), чтобы убрать пустоту сверху -->
+                                        <div class="flex items-end justify-center h-28 w-full pb-2">
                                             <!-- Два div'a внутри vertical-rl создают две параллельные линии текста -->
                                             <div class="[writing-mode:vertical-rl] rotate-180 text-left">
                                                 
@@ -110,8 +112,8 @@
                                                     {{ \Carbon\Carbon::parse($col['date'])->format('d.m.Y') }}
                                                 </div>
                                                 
-                                                <!-- Строка 2: Причина и карандашик -->
-                                                <div class="text-[10px] font-normal text-gray-500 whitespace-nowrap flex items-center gap-1 cursor-pointer hover:text-blue-600 leading-tight" 
+                                                <!-- Строка 2: Причина и карандашик (добавили mt-1 для легкого отступа между строками) -->
+                                                <div class="text-[10px] font-normal text-gray-500 whitespace-nowrap flex items-center gap-1 cursor-pointer hover:text-blue-600 leading-tight mt-1" 
                                                       @click="openEditReasonModal('{{ $col['date'] }}', '{{ addslashes($col['reason']) }}')" title="Изменить причину для колонки">
                                                     {{ $col['reason'] ?: 'Без описания' }}
                                                     <!-- Иконка карандаша (появляется при наведении) -->
@@ -122,7 +124,8 @@
                                         </div>
                                     </th>
                                 @empty
-                                    <th class="px-3 py-3 text-center text-gray-400 font-normal align-middle h-40">За период наград нет</th>
+                                    <!-- Тоже поменяли высоту на h-28 -->
+                                    <th class="px-3 py-3 text-center text-gray-400 font-normal align-middle h-28">За период наград нет</th>
                                 @endforelse
                             </tr>
                         </thead>
@@ -242,7 +245,7 @@
                         <label class="block font-bold text-sm text-gray-700 mb-2">Выберите награду <span x-show="!currentReward" class="text-red-500 text-xs font-normal ml-2">(необходимо выбрать)</span></label>
                         
                         <!-- ГАЛЕРЕЯ НАГРАД ВМЕСТО ВЫПАДАЮЩЕГО СПИСКА -->
-                        <div class="flex overflow-x-auto p-2 gap-3 no-scrollbar items-center bg-gray-50 border rounded-lg shadow-inner border-gray-200">
+                        <div class="flex flex-wrap justify-center p-3 gap-3 bg-gray-50 border rounded-lg shadow-inner border-gray-200">
                             @foreach($availableRewards as $r)
                                 <button 
                                     type="button"

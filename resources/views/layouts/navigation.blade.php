@@ -70,6 +70,7 @@
                             <x-nav-link :href="route('works.index')" :active="request()->routeIs('works.*')">Работы</x-nav-link>
                             <x-nav-link :href="route('tutors.index')" :active="request()->routeIs('tutors.*')">Мои ученики</x-nav-link>
                             <x-nav-link :href="route('tutors.matrix')" :active="request()->routeIs('tutors.matrix')">Сводная матрица</x-nav-link>
+                            <x-nav-link :href="route('remote.gateway')" :active="request()->routeIs('remote.*')">📱 Пульт</x-nav-link>
                             <x-nav-link :href="route('rewards.journal')" :active="request()->routeIs('rewards.journal')">Журнал наград</x-nav-link>
                             <x-nav-link :href="route('rewards.issued')" :active="request()->routeIs('rewards.issued')">Реестр наград</x-nav-link>
                         @endcan
@@ -185,6 +186,7 @@
                     <x-responsive-nav-link :href="route('works.index')" :active="request()->routeIs('works.*')">Работы</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutors.index')" :active="request()->routeIs('tutors.*')">Мои ученики</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutors.matrix')" :active="request()->routeIs('tutors.matrix')">Сводная матрица</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('remote.gateway')" :active="request()->routeIs('remote.*')">📱 Пульт</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('rewards.journal')" :active="request()->routeIs('rewards.journal')">Журнал наград</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('rewards.issued')" :active="request()->routeIs('rewards.issued')">Реестр наград</x-responsive-nav-link>
                 @endcan
