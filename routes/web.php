@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
         // Журнал наград
         Route::get('/rewards/journal', [StudentRewardController::class, 'journal'])->name('rewards.journal');
         Route::post('/rewards/manual', [StudentRewardController::class, 'storeManual'])->name('rewards.storeManual');
+        Route::patch('/rewards/journal/bulk-reason', [StudentRewardController::class, 'updateBulkReason'])->name('rewards.bulkReason');
         Route::patch('/rewards/toggle-accounted/{studentReward}', [StudentRewardController::class, 'toggleAccounted'])->name('rewards.toggleAccounted');
         Route::patch('/rewards/toggle-handed-over/{studentReward}', [StudentRewardController::class, 'toggleHandedOver'])->name('rewards.toggleHandedOver');
         // Общий список выданных наград

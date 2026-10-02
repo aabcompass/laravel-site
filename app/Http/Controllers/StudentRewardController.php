@@ -332,4 +332,38 @@ class StudentRewardController extends Controller
 
         return view('rewards.my', compact('rewards'));
     }
+
+    /**
+     * Массовое изменение основания (reason) для всей колонки в журнале
+     */
+    public function updateBulkReason(Request $request)
+    {
+        $request->validate([
+            'group_id' => 'required|exists:Groups,id',
+            'date' => 'required|date',
+            'old_reason' => 'nullable|string',
+            'new_reason' => 'nullable|string|max:150',
+        ]);
+
+        // Находим всех учеников этой группы
+        $studentIds = \App\Models\User::where('group_id', $request->group_id)->pluck('id');
+
+        // Выбираем награды за указанную дату
+        $query = StudentReward::whereIn('student_id', $studentIds)
+            ->whereDate('created_at', $request->date);
+
+        // Фильтруем по старой причине (учитывая, что она может быть пустой)
+        if (empty($request->old_reason)) {
+            $query->where(function ($q) {
+                $q->whereNull('reason')->orWhere('reason', '');
+            });
+        } else {
+            $query->where('reason', $request->old_reason);
+        }
+
+        // Выполняем массовое обновление
+        $query->update(['reason' => $request->new_reason]);
+
+        return back()->with('success', 'Основание для наград успешно обновлено у всей колонки.');
+    }
 };
