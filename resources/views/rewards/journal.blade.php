@@ -184,8 +184,9 @@
                                                                 }
                                                             }" 
                                                             x-show="!deleted" x-transition.opacity @click.stop="toggle()"
-                                                            class="relative cursor-pointer transition-all duration-200 border rounded shadow-sm p-1 flex flex-col items-center justify-center w-full max-w-[45px] group/reward"
-                                                            :class="accounted ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-white border-blue-300 ring-2 ring-blue-100 hover:scale-110'"
+                                                            style="background-color: {{ $sr->reward->color ?? '#ffffff' }}; color: {{ ($sr->reward->color && strtolower($sr->reward->color) !== '#ffffff') ? '#ffffff' : '#4338ca' }}"
+                                                            class="relative cursor-pointer transition-all duration-200 border border-black/10 rounded shadow-sm p-1 flex flex-col items-center justify-center w-full max-w-[45px] group/reward"
+                                                            :class="accounted ? 'opacity-50 grayscale-[50%]' : 'ring-2 ring-blue-300 ring-offset-1 hover:scale-110 shadow-md'"
                                                             title="{{ $sr->reward->name }} (Выдал: {{ $sr->teacher->last_name }})">
                                                             
                                                             <div x-show="loading" class="absolute inset-0 bg-white/50 rounded flex items-center justify-center z-30"><svg class="animate-spin h-3 w-3 text-blue-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>
@@ -198,7 +199,7 @@
                                                             @if($sr->reward->svg_content)
                                                                 <div class="h-6 w-6 [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain">{!! $sr->reward->svg_content !!}</div>
                                                             @elseif($sr->reward->symbol_latex)
-                                                                <span class="font-bold text-[10px] text-indigo-700">${!! $sr->reward->symbol_latex !!}$</span>
+                                                                <span class="font-bold text-[10px]">${!! $sr->reward->symbol_latex !!}$</span>
                                                             @else
                                                                 <span class="text-[9px] font-bold">{{ $sr->reward->key }}</span>
                                                             @endif
@@ -250,10 +251,11 @@
                                 <button 
                                     type="button"
                                     @click="currentReward = {{ $r->id }}"
-                                    :class="currentReward == {{ $r->id }} ? 'ring-2 ring-indigo-500 bg-white scale-105 shadow-md' : 'opacity-60 bg-transparent hover:opacity-100 hover:bg-white'"
-                                    class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 border border-gray-200 rounded-xl transition-all"
+                                    style="background-color: {{ $r->color ?? '#ffffff' }}; color: {{ ($r->color && strtolower($r->color) !== '#ffffff') ? '#ffffff' : '#4338ca' }}"
+                                    :class="currentReward == {{ $r->id }} ? 'ring-2 ring-indigo-500 ring-offset-1 scale-105 shadow-md opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'"
+                                    class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 border border-black/10 rounded-xl transition-all"
                                 >
-                                    <div class="text-lg text-indigo-700 font-black flex items-center justify-center h-8 w-full">
+                                    <div class="text-lg font-black flex items-center justify-center h-8 w-full">
                                         @if($r->svg_content)
                                             <div class="h-6 w-6 [&>svg]:w-full [&>svg]:h-full">{!! $r->svg_content !!}</div>
                                         @elseif($r->symbol_latex)
@@ -262,7 +264,7 @@
                                             {{ $r->key }}
                                         @endif
                                     </div>
-                                    <span class="text-[9px] font-bold text-gray-600 mt-1 leading-tight text-center px-1">{{ $r->name }}</span>
+                                    <span class="text-[9px] font-bold mt-1 leading-tight text-center px-1" style="color: {{ ($r->color && strtolower($r->color) !== '#ffffff') ? '#ffffff' : '#4b5563' }}">{{ $r->name }}</span>
                                 </button>
                             @endforeach
                         </div>
