@@ -12,11 +12,12 @@ class Reward extends Model
         'key', 'name', 'symbol_latex', 'svg_content',
         'physical_desc', 'public_desc', 'private_desc', 'perks',
         'is_for_answer', 'carrier_type', 'requires_registration',
-        'z_number', 'a_number'
+        'z_number', 'a_number', 'is_absent', 'color'
     ];
 
     protected $casts = [
         'is_for_answer' => 'boolean',
         'requires_registration' => 'boolean',
+        'is_absent' => 'boolean',
     ];
 }

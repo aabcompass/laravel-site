@@ -56,6 +56,13 @@
                                     <div>
                                         <label class="block font-medium text-sm text-gray-700 mb-1">Массовое число (A)</label>
                                         <input type="number" name="a_number" value="{{ old('a_number', $reward->a_number ?? '') }}" class="w-full border-gray-300 rounded shadow-sm">
+                                    </div>                                    
+                                    <div class="pt-2 border-t">
+                                        <label class="block font-medium text-sm text-gray-700 mb-2">Цвет награды (Фон / Текст)</label>
+                                        <div class="flex items-center gap-3">
+                                            <input type="color" name="color" value="{{ old('color', $reward->color ?? '#ffffff') }}" class="h-10 w-16 cursor-pointer border border-gray-300 rounded shadow-sm p-0.5">
+                                            <span class="text-xs text-gray-500">Используется для раскраски названия и фона плиток</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -84,6 +91,15 @@
                                     <label class="block font-medium text-sm text-gray-700 mb-1">Тип физического носителя</label>
                                     <input type="text" name="carrier_type" value="{{ old('carrier_type', $reward->carrier_type ?? '') }}" placeholder="Магнит, Брелок (или оставьте пустым)" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500">
                                 </div>
+
+                                <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded border">
+                                    <input type="checkbox" name="is_absent" value="1" {{ old('is_absent', $reward->is_absent ?? false) ? 'checked' : '' }} class="rounded text-red-600 focus:ring-red-500 w-5 h-5">
+                                    <div>
+                                        <span class="font-bold text-sm text-gray-800">Отметка об отсутствии (Вакуум)</span>
+                                        <div class="text-xs text-gray-500">Особая системная награда для отсутствующих учеников</div>
+                                    </div>
+                                </label>
+
                             </div>
                         </div>
                     </div>

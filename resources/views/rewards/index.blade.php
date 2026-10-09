@@ -29,24 +29,26 @@
                     <tbody>
                         @forelse ($rewards as $reward)
                             <tr class="bg-white border-b hover:bg-indigo-50 transition">
+                                
                                 <td class="px-6 py-3 text-center">
                                     @if($reward->svg_content)
-                                        <!-- Классы [&>svg]:... заставляют любую вставленную SVG-картинку масштабироваться под размер блока -->
-                                        <div class="h-12 w-12 bg-gray-900 rounded inline-flex items-center justify-center shadow-sm [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain p-1">
+                                        <div class="h-12 w-12 rounded inline-flex items-center justify-center shadow-sm border border-black/10 [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain p-1" style="background-color: {{ $reward->color ?? '#f3f4f6' }}">
                                             {!! $reward->svg_content !!}
                                         </div>
                                     @else
-                                        <div class="h-12 w-12 bg-gray-100 rounded inline-flex items-center justify-center text-gray-400 border text-xs">Нет</div>
+                                        <div class="h-12 w-12 rounded inline-flex items-center justify-center text-gray-400 border border-black/10 text-xs" style="background-color: {{ $reward->color ?? '#f3f4f6' }}">Нет</div>
                                     @endif
                                 </td>
                                 
+                                <!-- Дальше идет ключ, а после него название: -->
                                 <td class="px-6 py-3">
                                     <div class="font-bold text-gray-800">{{ $reward->key }}</div>
                                     <div class="text-xs text-gray-500">Z: {{ $reward->z_number ?? '-' }}, A: {{ $reward->a_number ?? '-' }}</div>
                                 </td>
                                 
                                 <td class="px-6 py-3">
-                                    <div class="font-bold text-lg text-indigo-700 flex items-center gap-3">
+                                    <!-- Цвет названия. Если цвет белый, используем стандартный синий, чтобы текст не слился с фоном -->
+                                    <div class="font-bold text-lg flex items-center gap-3" style="color: {{ ($reward->color && strtolower($reward->color) !== '#ffffff') ? $reward->color : '#4338ca' }}">
                                         {{ $reward->name }} 
                                         @if($reward->symbol_latex)
                                             <span class="text-gray-900 bg-gray-100 px-2 py-0.5 rounded border text-sm">${!! $reward->symbol_latex !!}$</span>

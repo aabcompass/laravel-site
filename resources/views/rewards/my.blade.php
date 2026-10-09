@@ -47,7 +47,7 @@
                                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col items-center justify-center text-center hover:shadow-md transition hover:border-indigo-300 group">
                                     
                                     <!-- Иконка награды -->
-                                    <div class="w-20 h-20 mb-3 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full border border-indigo-100 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                                    <div class="w-20 h-20 mb-3 flex items-center justify-center rounded-full border border-black/10 shadow-inner group-hover:scale-110 transition-transform duration-300" style="background-color: {{ $sr->reward->color ?? '#f8fafc' }}">
                                         @if($sr->reward->svg_content)
                                             <div class="w-12 h-12 [&>svg]:w-full [&>svg]:h-full">{!! $sr->reward->svg_content !!}</div>
                                         @elseif($sr->reward->symbol_latex)

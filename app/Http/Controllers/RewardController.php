@@ -69,6 +69,7 @@ class RewardController extends Controller
             'carrier_type' => 'nullable|string|max:100',
             'z_number' => 'nullable|integer',
             'a_number' => 'nullable|integer',
+            'color' => 'nullable|string|max:20',
         ];
     }
 
@@ -76,5 +77,6 @@ class RewardController extends Controller
     {
         $data['is_for_answer'] = $request->has('is_for_answer');
         $data['requires_registration'] = $request->has('requires_registration');
+        $data['is_absent'] = $request->has('is_absent');
     }
 }
