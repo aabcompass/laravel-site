@@ -83,24 +83,36 @@
                                 <!-- СТАТУС ВЫДАЧИ -->
                                 <td class="px-6 py-4">
                                     @if($isAssigned)
-                                        <div class="flex flex-col gap-1">
+                                        <div class="flex flex-col gap-2">
                                             @foreach($variant->assignments as $assignment)
-                                                <div class="bg-green-100 border border-green-200 text-green-800 text-xs pl-2 pr-1 py-1 rounded flex items-center justify-between gap-2" title="Выдано: {{ $assignment->assigned_at->format('d.m.Y H:i') }}">
+                                                <div class="bg-green-100 border border-green-200 text-green-800 text-xs p-2 rounded flex flex-col shadow-sm">
                                                     
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="font-bold">{{ $assignment->group->name ?? 'Группа удалена' }}</span>
-                                                        <span class="opacity-75">
-                                                            {{ $assignment->due_date ? 'до ' . $assignment->due_date->format('d.m.y') : $assignment->assigned_at->format('d.m.y') }}
-                                                        </span>
+                                                    <!-- Верхняя часть: Группа, дата, крестик -->
+                                                    <div class="flex items-center justify-between gap-2" title="Выдано: {{ $assignment->assigned_at->format('d.m.Y H:i') }}">
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="font-bold">{{ $assignment->group->name ?? 'Группа удалена' }}</span>
+                                                            <span class="opacity-75 bg-green-200/50 px-1.5 py-0.5 rounded">
+                                                                {{ $assignment->due_date ? 'до ' . $assignment->due_date->format('d.m.y') : $assignment->assigned_at->format('d.m.y') }}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <!-- КРЕСТИК ДЛЯ ОТЗЫВА -->
+                                                        @if($isAuthorOrAdmin)
+                                                            <form action="{{ route('variants.revoke', $assignment->id) }}" method="POST" class="m-0" onsubmit="return confirm('Отменить выдачу варианта этой группе?')">
+                                                                @csrf @method('DELETE')
+                                                                <button type="submit" class="text-green-600 hover:bg-red-500 hover:text-white rounded-full w-5 h-5 flex items-center justify-center transition font-bold">&times;</button>
+                                                            </form>
+                                                        @endif
                                                     </div>
-                                                    
-                                                    <!-- КРЕСТИК ДЛЯ ОТЗЫВА -->
-                                                    @if($isAuthorOrAdmin)
-                                                        <form action="{{ route('variants.revoke', $assignment->id) }}" method="POST" class="m-0" onsubmit="return confirm('Отменить выдачу варианта этой группе?')">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" class="text-green-600 hover:bg-green-200 hover:text-green-900 rounded-full w-4 h-4 flex items-center justify-center transition">&times;</button>
-                                                        </form>
+
+                                                    <!-- Нижняя часть: Комментарий (если есть) -->
+                                                    @if($assignment->public_comment)
+                                                        <div class="border-t border-green-200/80 pt-1.5 mt-1.5 text-[11px] leading-tight text-green-900">
+                                                            <span class="opacity-60 font-bold uppercase tracking-wider mr-1">Задание:</span>
+                                                            {!! nl2br(e($assignment->public_comment)) !!}
+                                                        </div>
                                                     @endif
+
                                                 </div>
                                             @endforeach
                                         </div>
