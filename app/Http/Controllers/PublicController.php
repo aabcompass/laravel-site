@@ -32,12 +32,13 @@ class PublicController extends Controller
      */
     public function showGroup($hash)
     {
-        $group = Group::where('public_hash', $hash)->firstOrFail();
+        $group = \App\Models\Group::where('public_hash', $hash)->firstOrFail();
 
-        // Достаем историю выдачи (от новых к старым)
+        // Достаем историю выдачи
+        // Сортировка: наиболее поздние сроки вверху (по due_date, если нет - по assigned_at)
         $assignments = \App\Models\AssignmentHistory::where('group_id', $group->id)
             ->with(['variant.work'])
-            ->orderBy('assigned_at', 'desc')
+            ->orderByRaw('COALESCE(due_date, assigned_at) DESC')
             ->get();
 
         return view('public.group', compact('group', 'assignments'));

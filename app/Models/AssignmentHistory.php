@@ -9,7 +9,7 @@ class AssignmentHistory extends Model
     protected $table = 'Assignment_History';
     public $timestamps = false;
 
-    protected $fillable = ['work_variant_id', 'group_id', 'teacher_id', 'due_date', 'assigned_at'];
+    protected $fillable = ['work_variant_id', 'group_id', 'teacher_id', 'due_date', 'assigned_at', 'public_comment'];
 
     protected $casts = [
         'assigned_at' => 'datetime',

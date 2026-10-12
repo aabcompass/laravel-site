@@ -313,9 +313,12 @@ class WorkVariantController extends Controller
     {
         if ($variant->author_id !== auth()->id() && !auth()->user()->hasRole('admin')) abort(403);
 
-        $request->validate(['group_id' => 'required|exists:Groups,id']);
+        $request->validate([
+            'group_id' => 'required|exists:Groups,id',
+            'due_date' => 'nullable|date',
+            'public_comment' => 'nullable|string',
+        ]);
 
-        // Проверяем, не выдавали ли уже этот вариант этой группе
         $exists = \App\Models\AssignmentHistory::where('work_variant_id', $variant->id)
                     ->where('group_id', $request->group_id)
                     ->exists();
@@ -329,6 +332,8 @@ class WorkVariantController extends Controller
             'group_id' => $request->group_id,
             'teacher_id' => auth()->id(),
             'assigned_at' => now(),
+            'due_date' => $request->due_date,
+            'public_comment' => $request->public_comment,
         ]);
 
         return back()->with('success', 'Вариант успешно выдан группе. Теперь он защищен от изменений.');

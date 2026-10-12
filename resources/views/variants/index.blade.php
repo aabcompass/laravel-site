@@ -83,11 +83,16 @@
                                 <!-- СТАТУС ВЫДАЧИ -->
                                 <td class="px-6 py-4">
                                     @if($isAssigned)
-                                        <div class="flex flex-wrap gap-1">
+                                        <div class="flex flex-col gap-1">
                                             @foreach($variant->assignments as $assignment)
-                                                <div class="bg-green-100 border border-green-200 text-green-800 text-xs pl-2 pr-1 py-1 rounded flex items-center gap-2" title="Выдано: {{ $assignment->assigned_at->format('d.m.Y H:i') }}">
-                                                    <span class="font-bold">{{ $assignment->group->name ?? 'Группа удалена' }}</span>
-                                                    <span class="opacity-75">{{ $assignment->assigned_at->format('d.m.y') }}</span>
+                                                <div class="bg-green-100 border border-green-200 text-green-800 text-xs pl-2 pr-1 py-1 rounded flex items-center justify-between gap-2" title="Выдано: {{ $assignment->assigned_at->format('d.m.Y H:i') }}">
+                                                    
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold">{{ $assignment->group->name ?? 'Группа удалена' }}</span>
+                                                        <span class="opacity-75">
+                                                            {{ $assignment->due_date ? 'до ' . $assignment->due_date->format('d.m.y') : $assignment->assigned_at->format('d.m.y') }}
+                                                        </span>
+                                                    </div>
                                                     
                                                     <!-- КРЕСТИК ДЛЯ ОТЗЫВА -->
                                                     @if($isAuthorOrAdmin)
@@ -180,16 +185,33 @@
                 
                 <form :action="`/variants/${currentVariantId}/assign`" method="POST" class="p-6">
                     @csrf
-                    <p class="mb-4 text-sm text-gray-600">Выберите учебную группу, которая должна получить доступ к варианту <strong x-text="currentVariantName" class="text-gray-900"></strong>.</p>
+                    <p class="mb-4 text-sm text-gray-600">Настройте выдачу варианта <strong x-text="currentVariantName" class="text-gray-900"></strong>.</p>
                     
-                    <select name="group_id" class="w-full border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500 mb-6" required>
-                        <option value="">-- Выберите группу --</option>
-                        @foreach($groups as $group)
-                            <option value="{{ $group->id }}">{{ $group->grade ? $group->grade.' кл - ' : '' }}{{ $group->name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block font-bold text-sm text-gray-700 mb-1">Кому выдать (Группа) <span class="text-red-500">*</span></label>
+                            <select name="group_id" class="w-full border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500" required>
+                                <option value="">-- Выберите группу --</option>
+                                @foreach($groups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->grade ? $group->grade.' кл - ' : '' }}{{ $group->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="flex justify-end gap-3">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block font-bold text-sm text-gray-700 mb-1">Срок сдачи (необязательно)</label>
+                                <input type="date" name="due_date" class="w-full border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500 text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-sm text-gray-700 mb-1">Комментарий (номера задач)</label>
+                            <textarea name="public_comment" rows="2" class="w-full border-gray-300 rounded shadow-sm focus:ring-green-500 focus:border-green-500 text-sm" placeholder="Например: Решить задачи 1, 3 и 5"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t">
                         <button type="button" @click="assignModalOpen = false" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition">Отмена</button>
                         <button type="submit" class="px-4 py-2 bg-green-600 text-white font-bold rounded hover:bg-green-700 shadow transition">Выдать доступ</button>
                     </div>
