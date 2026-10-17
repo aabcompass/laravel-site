@@ -1,14 +1,25 @@
 @php
-    // Проверяем прямо в БД: кому из этой группы СЕГОДНЯ выдавали награду с галочкой "is_absent"
-    $todayAbsents = \App\Models\StudentReward::whereIn('student_id', $students->pluck('id'))
-        ->whereDate('created_at', \Carbon\Carbon::today())
-        ->whereHas('reward', function($q) {
-            $q->where('is_absent', true);
-        })
-        ->pluck('student_id')
-        ->unique()
-        ->values()
-        ->toArray();
+    // Собираем данные ТОЛЬКО за сегодня прямо из базы
+    $today = \Carbon\Carbon::today();
+    $todayRewards = \App\Models\StudentReward::whereIn('student_id', $students->pluck('id'))
+        ->whereDate('created_at', $today)
+        ->with('reward')
+        ->get();
+
+    $todayAbsents = [];
+    $todayAnswered = [];
+
+    foreach($todayRewards as $sr) {
+        if ($sr->reward && $sr->reward->is_absent) {
+            $todayAbsents[] = $sr->student_id;
+        } else {
+            $todayAnswered[] = $sr->student_id;
+        }
+    }
+
+    // Оставляем только уникальные ID
+    $todayAbsents = array_values(array_unique($todayAbsents));
+    $todayAnswered = array_values(array_unique($todayAnswered));
 @endphp
 <!DOCTYPE html>
 <html lang="ru" translate="no">
@@ -32,7 +43,7 @@
         .name-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
-<body x-data="remoteApp({{ $group->id }}, {{ json_encode($todayAbsents) }})" class="h-screen flex flex-col overflow-hidden text-gray-800 relative">
+<body x-data="remoteApp({{ json_encode($todayAbsents) }}, {{ json_encode($todayAnswered) }})" class="h-screen flex flex-col overflow-hidden text-gray-800 relative">
 
     <div x-show="toast.show" x-transition.opacity x-cloak class="fixed top-4 left-4 right-4 z-50 flex items-center justify-between bg-green-600 text-white px-4 py-3 rounded-lg shadow-xl border border-green-500">
         <div class="font-bold text-sm" x-html="toast.message"></div>
@@ -71,12 +82,12 @@
                             'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)] border-indigo-700 scale-105 z-10 ring-2 ring-indigo-400': selectedStudentId === student.id,
                             'bg-gray-100 text-gray-400 opacity-50': absentIds.includes(student.id),
                             'bg-white text-gray-700 border-gray-200 shadow-sm hover:bg-gray-50': !absentIds.includes(student.id) && selectedStudentId !== student.id,
-                            'ring-2 ring-indigo-200': hasAnswered(student.id) && !absentIds.includes(student.id) && selectedStudentId !== student.id
+                            'ring-2 ring-indigo-200': answeredIds.includes(student.id) && !absentIds.includes(student.id) && selectedStudentId !== student.id
                         }"
                         class="p-2 rounded-lg border flex flex-col items-center justify-center text-center h-16 transition-all duration-200 relative"
                     >
-                        <!-- Индикатор "уже отвечал" -->
-                        <div x-show="hasAnswered(student.id) && !absentIds.includes(student.id) && selectedStudentId !== student.id" class="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-300 rounded-full"></div>
+                        <!-- Индикатор "Отвечал сегодня" -->
+                        <div x-show="answeredIds.includes(student.id) && !absentIds.includes(student.id) && selectedStudentId !== student.id" class="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-300 rounded-full"></div>
                         
                         <!-- Фамилия (Зачеркивается, если отсутствует) -->
                         <span x-text="student.last_name" :class="absentIds.includes(student.id) ? 'line-through' : ''" class="font-bold text-[13px] leading-tight name-clamp w-full"></span>
@@ -104,7 +115,6 @@
         
         <div class="flex overflow-x-auto p-3 gap-3 no-scrollbar items-center">
             @foreach($rewards as $reward)
-                <!-- В функцию giveReward теперь передается флаг is_absent -->
                 <button 
                     @click="giveReward({{ $reward->id }}, '{{ addslashes($reward->name) }}', {{ $reward->is_absent ? 'true' : 'false' }})"
                     :disabled="!selectedStudentId"
@@ -127,29 +137,21 @@
         </div>
     </footer>
 
-    <!-- ЧИСТАЯ ЛОГИКА (БЕЗ COOKIES ДЛЯ ОТСУТСТВУЮЩИХ) -->
+    <!-- ЧИСТАЯ ЛОГИКА (БЕЗ COOKIES) -->
     <script>
-        function remoteApp(groupId, serverAbsents) {
+        function remoteApp(serverAbsents, serverAnswered) {
             return {
-                groupId: groupId,
                 students: @json($students->map->only(['id', 'first_name', 'last_name'])),
                 
                 selectedStudentId: null,
                 rouletteRunning: false,
                 
-                answeredIds: [], // Оставляем куки только для тех, кто уже отвечал на уроке
-                absentIds: serverAbsents, // Берем список отсутствующих прямо из БД
+                absentIds: serverAbsents,
+                answeredIds: serverAnswered, 
                 
                 toast: { show: false, message: '', rewardId: null, isAbsent: false, studentId: null },
                 toastTimeout: null,
 
-                init() {
-                    let ans = localStorage.getItem(`answered_${this.groupId}`);
-                    this.answeredIds = ans ? JSON.parse(ans) : [];
-                },
-
-                saveAnswered() { localStorage.setItem(`answered_${this.groupId}`, JSON.stringify(this.answeredIds)); },
-                hasAnswered(id) { return this.answeredIds.includes(id); },
                 changeGroup(newGroupId) { window.location.href = `/class-rewards/${newGroupId}`; },
 
                 getSelectedStudentName() {
@@ -165,12 +167,10 @@
 
                 getAvailableStudents() {
                     // Исключаем и ответивших, и отсутствующих
-                    let avail = this.students.filter(s => !this.hasAnswered(s.id) && !this.absentIds.includes(s.id));
+                    let avail = this.students.filter(s => !this.answeredIds.includes(s.id) && !this.absentIds.includes(s.id));
                     
                     if (avail.length === 0) {
-                        this.answeredIds = [];
-                        this.saveAnswered();
-                        // Если все перебраны, начинаем новый круг (но без отсутствующих)
+                        // Если все ответили - крутим рулетку по второму кругу среди присутствующих!
                         avail = this.students.filter(s => !this.absentIds.includes(s.id));
                     }
                     return avail;
@@ -195,11 +195,10 @@
                     }, 500);
                 },
 
-                // ДОБАВЛЕН ФЛАГ isAbsent
                 async giveReward(rewardId, rewardName, isAbsent) {
                     if (!this.selectedStudentId) return;
                     
-                    const studentId = this.selectedStudentId; // Запоминаем ID до сброса
+                    const studentId = this.selectedStudentId;
                     const studentName = this.getSelectedStudentName();
 
                     try {
@@ -213,20 +212,12 @@
                         let data = await res.json();
                         
                         if (data.success) {
-                            // Сохраняем данные для функции отмены (undo)
-                            this.showToast(`<b>${studentName}</b> получил(а) <b>${rewardName}</b>!`, data.id, isAbsent, studentId);
+                            this.showToast(`<b>${studentName}</b>: <b>${rewardName}</b>!`, data.id, isAbsent, studentId);
                             
                             if (isAbsent) {
-                                // Если это Вакуум - делаем ученика серым прямо сейчас
-                                if (!this.absentIds.includes(studentId)) {
-                                    this.absentIds.push(studentId);
-                                }
+                                if (!this.absentIds.includes(studentId)) this.absentIds.push(studentId);
                             } else {
-                                // Если обычная награда - помечаем ответившим
-                                if (!this.answeredIds.includes(studentId)) {
-                                    this.answeredIds.push(studentId);
-                                    this.saveAnswered();
-                                }
+                                if (!this.answeredIds.includes(studentId)) this.answeredIds.push(studentId);
                             }
                             
                             this.selectedStudentId = null;
@@ -258,17 +249,11 @@
                         if (res.ok) {
                             this.toast.show = false;
                             
-                            // Откатываем визуальные изменения на Пульте
                             if (this.toast.isAbsent) {
-                                // Воскрешаем из Вакуума
                                 this.absentIds = this.absentIds.filter(id => id !== this.toast.studentId);
                             } else {
-                                // Убираем из ответивших
                                 this.answeredIds = this.answeredIds.filter(id => id !== this.toast.studentId);
-                                this.saveAnswered();
                             }
-                            
-                            alert('Выдача отменена!');
                         }
                     } catch(e) { alert('Ошибка сети при отмене.'); }
                 }
