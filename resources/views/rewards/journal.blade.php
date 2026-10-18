@@ -243,8 +243,32 @@
                     </div>
                     
                     <div>
+                        <label class="block font-bold text-sm text-gray-700 mb-1">За что выдается (Основание)</label>
+                        <input type="text" name="reason" x-model="currentReason" list="reasons-list" maxlength="150" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm" placeholder="Например: За устный ответ">
+                        <datalist id="reasons-list">
+                            @foreach($teacherReasons as $reason) <option value="{{ $reason }}"> @endforeach
+                        </datalist>
+                    </div>
+
+                    <!-- НОВЫЙ БЛОК: ПРИВЯЗКА ВАРИАНТА -->
+                    @if(isset($groupVariants) && $groupVariants->count() > 0)
+                        <div>
+                            <label class="block font-bold text-sm text-gray-700 mb-1">Привязать к выданной работе <span class="text-gray-400 font-normal">(необязательно)</span></label>
+                            <select name="work_variant_id" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm bg-gray-50">
+                                <option value="">-- Без привязки --</option>
+                                @foreach($groupVariants as $history)
+                                    <option value="{{ $history->variant->id }}">
+                                        {{ $history->assigned_at->format('d.m.y') }} | {{ $history->variant->work->title ?? 'Без названия' }} ({{ $history->variant->name }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                    
+                    
+                    <div>
                         <label class="block font-bold text-sm text-gray-700 mb-2">Выберите награду <span x-show="!currentReward" class="text-red-500 text-xs font-normal ml-2">(необходимо выбрать)</span></label>
-                        
+
                         <!-- ГАЛЕРЕЯ НАГРАД ВМЕСТО ВЫПАДАЮЩЕГО СПИСКА -->
                         <div class="flex flex-wrap justify-center p-3 gap-3 bg-gray-50 border rounded-lg shadow-inner border-gray-200">
                             @foreach($availableRewards as $r)

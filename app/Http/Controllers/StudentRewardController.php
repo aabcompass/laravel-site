@@ -34,6 +34,7 @@ class StudentRewardController extends Controller
         $students = [];
         $rewardsMatrix = [];
         $uniqueColumns = []; // Теперь колонки - это комбинация Дата + Причина
+        $groupVariants = collect(); // <-- Пустая Коллекция Laravel
 
         if ($groupId) {
             $students = User::where('group_id', $groupId)->orderBy('last_name')->get();
@@ -63,10 +64,17 @@ class StudentRewardController extends Controller
                 return strcmp($a['date'], $b['date']);
             });
             $uniqueColumns = $columnsRaw;
+
+            // ДОБАВЛЯЕМ ПОЛУЧЕНИЕ ВАРИАНТОВ ГРУППЫ (От новых к старым)
+            $groupVariants = \App\Models\AssignmentHistory::where('group_id', $groupId)
+                ->with('variant.work')
+                ->orderBy('assigned_at', 'desc')
+                ->get()
+                ->unique('work_variant_id'); // Если выдавали дважды, оставляем один
         }
 
         return view('rewards.journal', compact(
-            'groups', 'groupId', 'dateFrom', 'students', 'uniqueColumns', 'rewardsMatrix', 'availableRewards', 'teacherReasons', 'defaultReason', 'defaultReward'
+            'groups', 'groupId', 'dateFrom', 'students', 'uniqueColumns', 'rewardsMatrix', 'availableRewards', 'teacherReasons', 'defaultReason', 'defaultReward', 'groupVariants'
         ));
     }
 
@@ -80,12 +88,14 @@ class StudentRewardController extends Controller
             'reward_id' => 'required|exists:Rewards,id',
             'date' => 'required|date',
             'reason' => 'nullable|string|max:150', // <- Валидация причины
+            'work_variant_id' => 'nullable|exists:Work_Variants,id',
         ]);
 
         StudentReward::create([
             'student_id' => $request->student_id,
             'reward_id' => $request->reward_id,
             'teacher_id' => auth()->id(),
+            'work_variant_id' => $request->work_variant_id,
             'reason' => $request->reason, // <- Сохраняем причину
             'is_accounted' => false,
             'is_handed_over' => true,
@@ -326,7 +336,7 @@ class StudentRewardController extends Controller
 
         // Оставили только загрузку самой награды, увеличили пагинацию до 50
         $rewards = StudentReward::where('student_id', $student->id)
-            ->with(['reward'])
+            ->with(['reward', 'variant.work'])
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 

@@ -63,8 +63,19 @@
                                     </div>
                                     
                                     <!-- Дата получения (без времени) -->
-                                    <div class="mt-auto text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100 w-full">
-                                        {{ $sr->created_at->format('d.m.Y') }}
+                                    <!-- Дата получения и ссылка на вариант -->
+                                    <div class="mt-auto w-full flex flex-col gap-1.5">
+                                        <div class="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1.5 rounded-md border border-gray-100 w-full">
+                                            {{ $sr->created_at->format('d.m.Y') }}
+                                        </div>
+                                        
+                                        @if($sr->variant && $sr->variant->public_hash)
+                                            <!-- Ссылка на вариант -->
+                                            <a href="{{ route('public.variant', $sr->variant->public_hash) }}" target="_blank" title="{{ $sr->variant->work->title ?? '' }} / {{ $sr->variant->name }}"
+                                               class="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-colors px-2 py-1.5 rounded-md w-full truncate flex items-center justify-center gap-1">
+                                                <span>📄</span> Вариант
+                                            </a>
+                                        @endif
                                     </div>
                                     
                                 </div>
