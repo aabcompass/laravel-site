@@ -11,7 +11,7 @@ class StudentReward extends Model
     protected $fillable = [
         'student_id', 'reward_id', 'teacher_id', 
         'is_accounted', 'is_handed_over', 'claim_hash', 'created_at',
-        'reason', 'work_variant_id'
+        'reason', 'work_variant_id' // <- Добавили work_variant_id
     ];
 
     protected $casts = [
@@ -22,4 +22,9 @@ class StudentReward extends Model
     public function student() { return $this->belongsTo(User::class, 'student_id'); }
     public function reward() { return $this->belongsTo(Reward::class, 'reward_id'); }
     public function teacher() { return $this->belongsTo(User::class, 'teacher_id'); }
+    
+    // НОВАЯ СВЯЗЬ: Награда может быть привязана к варианту работы
+    public function variant() { 
+        return $this->belongsTo(WorkVariant::class, 'work_variant_id'); 
+    }
 }

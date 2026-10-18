@@ -40,7 +40,8 @@ class StudentRewardController extends Controller
             $students = User::where('group_id', $groupId)->orderBy('last_name')->get();
             $studentIds = $students->pluck('id')->toArray();
 
-            $studentRewards = StudentReward::with(['reward'])
+            // ДОБАВИЛИ 'variant.work' в жадную загрузку
+            $studentRewards = StudentReward::with(['reward', 'variant.work'])
                 ->whereIn('student_id', $studentIds)
                 ->whereDate('created_at', '>=', $dateFrom)
                 ->orderBy('created_at')
@@ -50,21 +51,32 @@ class StudentRewardController extends Controller
             foreach ($studentRewards as $sr) {
                 $dateKey = $sr->created_at->format('Y-m-d');
                 $reasonKey = $sr->reason ?? '';
-                $colKey = $dateKey . '|' . $reasonKey; // Создаем уникальный ключ колонки
+                $variantIdKey = $sr->work_variant_id ?? ''; // ID варианта для ключа
+                
+                // Ключ столбца теперь состоит из трех частей!
+                $colKey = $dateKey . '|' . $reasonKey . '|' . $variantIdKey;
 
                 if (!isset($columnsRaw[$colKey])) {
-                    $columnsRaw[$colKey] = ['date' => $dateKey, 'reason' => $sr->reason];
+                    $columnsRaw[$colKey] = [
+                        'date' => $dateKey, 
+                        'reason' => $sr->reason,
+                        'work_variant_id' => $sr->work_variant_id,
+                        'variant' => $sr->variant
+                    ];
                 }
                 $rewardsMatrix[$sr->student_id][$colKey][] = $sr;
             }
 
-            // Сортируем колонки: сначала по дате, затем по алфавиту причины
             usort($columnsRaw, function($a, $b) {
-                if ($a['date'] == $b['date']) return strcmp($a['reason'], $b['reason']);
+                if ($a['date'] == $b['date']) {
+                    if ($a['reason'] == $b['reason']) {
+                        return $a['work_variant_id'] <=> $b['work_variant_id'];
+                    }
+                    return strcmp($a['reason'], $b['reason']);
+                }
                 return strcmp($a['date'], $b['date']);
             });
             $uniqueColumns = $columnsRaw;
-
             // ДОБАВЛЯЕМ ПОЛУЧЕНИЕ ВАРИАНТОВ ГРУППЫ (От новых к старым)
             $groupVariants = \App\Models\AssignmentHistory::where('group_id', $groupId)
                 ->with('variant.work')
@@ -343,9 +355,6 @@ class StudentRewardController extends Controller
         return view('rewards.my', compact('rewards'));
     }
 
-    /**
-     * Массовое изменение основания (reason) для всей колонки в журнале
-     */
     public function updateBulkReason(Request $request)
     {
         $request->validate([
@@ -353,16 +362,16 @@ class StudentRewardController extends Controller
             'date' => 'required|date',
             'old_reason' => 'nullable|string',
             'new_reason' => 'nullable|string|max:150',
+            'old_work_variant_id' => 'nullable|integer', // Добавили старый ID
+            'new_work_variant_id' => 'nullable|exists:Work_Variants,id', // И новый
         ]);
 
-        // Находим всех учеников этой группы
         $studentIds = \App\Models\User::where('group_id', $request->group_id)->pluck('id');
 
-        // Выбираем награды за указанную дату
         $query = StudentReward::whereIn('student_id', $studentIds)
             ->whereDate('created_at', $request->date);
 
-        // Фильтруем по старой причине (учитывая, что она может быть пустой)
+        // Ищем по старой причине
         if (empty($request->old_reason)) {
             $query->where(function ($q) {
                 $q->whereNull('reason')->orWhere('reason', '');
@@ -371,9 +380,19 @@ class StudentRewardController extends Controller
             $query->where('reason', $request->old_reason);
         }
 
-        // Выполняем массовое обновление
-        $query->update(['reason' => $request->new_reason]);
+        // Ищем по старому варианту
+        if (empty($request->old_work_variant_id)) {
+            $query->whereNull('work_variant_id');
+        } else {
+            $query->where('work_variant_id', $request->old_work_variant_id);
+        }
 
-        return back()->with('success', 'Основание для наград успешно обновлено у всей колонки.');
+        // Обновляем оба поля
+        $query->update([
+            'reason' => $request->new_reason,
+            'work_variant_id' => $request->new_work_variant_id
+        ]);
+
+        return back()->with('success', 'Данные колонки успешно обновлены.');
     }
 };

@@ -15,6 +15,7 @@
             currentDate: '{{ date('Y-m-d') }}',
             currentReason: '{{ $defaultReason }}', 
             currentReward: '{{ $defaultReward }}', 
+            currentVariantId: '',
             qrModalOpen: false,
 
             // Состояние для редактирования колонки
@@ -22,19 +23,24 @@
             editDate: '',
             editOldReason: '',
             editNewReason: '',
+            editOldVariantId: '',
+            editNewVariantId: '',
 
-            openAwardModal(id, name, date = null, reason = null) {
+            openAwardModal(id, name, date = null, reason = null, variantId = null) {
                 this.modalStudentId = id;
                 this.modalStudentName = name;
                 if (date) this.currentDate = date;
                 if (reason !== null) this.currentReason = reason;
+                if (variantId) this.currentVariantId = variantId; else this.currentVariantId = '';
                 this.modalOpen = true;
             },
 
-            openEditReasonModal(date, oldReason) {
+            openEditReasonModal(date, oldReason, oldVariantId) {
                 this.editDate = date;
                 this.editOldReason = oldReason;
                 this.editNewReason = oldReason;
+                this.editOldVariantId = oldVariantId || '';
+                this.editNewVariantId = oldVariantId || '';
                 this.editReasonModalOpen = true;
             }
         }">
@@ -45,7 +51,6 @@
             @if (session('error')) <div class="mb-4 p-4 bg-red-100 text-red-700 rounded shadow-sm font-bold">{{ session('error') }}</div> @endif
 
             <!-- ФИЛЬТРЫ И КНОПКИ ГРУПП -->
-            <!-- Используем flex-row и justify-between для разнесения блоков по краям экрана -->
             <form method="GET" action="{{ route('rewards.journal') }}" class="bg-white p-5 rounded-lg shadow-sm border mb-4 flex flex-col xl:flex-row justify-between xl:items-end gap-5">
                 
                 <!-- Левый блок: Кнопки выбора группы -->
@@ -60,7 +65,6 @@
                                         ? 'bg-indigo-600 border-indigo-700 text-white font-bold ring-2 ring-indigo-300 ring-offset-1' 
                                         : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900' 
                                     }}">
-                                    <!-- Оставили только имя группы -->
                                     {{ $group->name }}
                                 </div>
                             </label>
@@ -92,19 +96,17 @@
                     <table class="w-full text-sm text-left border-collapse min-w-max">
                         
                         <!-- ШАПКА -->
-                        <!-- z-40 держит шапку поверх содержимого -->
                         <thead class="bg-gray-100 text-gray-700 sticky top-0 z-40 shadow-sm border-b">
                             <tr>
-                                <!-- z-50 держит левый верхний угол поверх всего! -->
+                                <!-- Закрепленная колонка (левый верхний угол) -->
                                 <th class="px-4 py-3 border-r sticky left-0 top-0 bg-gray-100 z-50 min-w-[250px] align-middle shadow-[1px_0_0_0_#e5e7eb]">
                                     Ученик
                                 </th>
                                 
-                                @forelse($uniqueColumns as $col)
-                                    <th class="px-2 py-3 border-r align-bottom w-14 hover:bg-gray-200 transition-colors group/th">
-                                        <!-- УМЕНЬШИЛИ ВЫСОТУ С h-40 (160px) до h-28 (112px), чтобы убрать пустоту сверху -->
-                                        <div class="flex items-end justify-center h-28 w-full pb-2">
-                                            <!-- Два div'a внутри vertical-rl создают две параллельные линии текста -->
+                               @forelse($uniqueColumns as $col)
+                                    <th class="px-2 py-3 border-r align-bottom w-16 hover:bg-gray-200 transition-colors group/th">
+                                        <!-- Убрали h-48, теперь блок сам подстраивается под текст! -->
+                                        <div class="flex items-end justify-center w-full pb-1">
                                             <div class="[writing-mode:vertical-rl] rotate-180 text-left">
                                                 
                                                 <!-- Строка 1: Дата -->
@@ -112,20 +114,30 @@
                                                     {{ \Carbon\Carbon::parse($col['date'])->format('d.m.Y') }}
                                                 </div>
                                                 
-                                                <!-- Строка 2: Причина и карандашик (добавили mt-1 для легкого отступа между строками) -->
+                                                <!-- Строка 2: Причина и карандашик -->
                                                 <div class="text-[10px] font-normal text-gray-500 whitespace-nowrap flex items-center gap-1 cursor-pointer hover:text-blue-600 leading-tight mt-1" 
-                                                      @click="openEditReasonModal('{{ $col['date'] }}', '{{ addslashes($col['reason']) }}')" title="Изменить причину для колонки">
+                                                      @click="openEditReasonModal('{{ $col['date'] }}', '{{ addslashes($col['reason']) }}', '{{ $col['work_variant_id'] ?? '' }}')" title="Изменить данные колонки">
                                                     {{ $col['reason'] ?: 'Без описания' }}
-                                                    <!-- Иконка карандаша (появляется при наведении) -->
                                                     <svg class="w-3 h-3 opacity-0 group-hover/th:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                                 </div>
+
+                                                <!-- Строки 3 и 4: Работа и Вариант -->
+                                                @if(!empty($col['variant']))
+                                                    <!-- Я убрал классы max-h-..., так как мы и так режем строку через Str::limit -->
+                                                    <div class="text-[10px] font-bold text-indigo-600 whitespace-nowrap leading-tight mt-1.5" title="{{ $col['variant']->work->title ?? '' }}">
+                                                        📄 {{ \Illuminate\Support\Str::limit($col['variant']->work->title ?? 'Без названия', 25) }}
+                                                    </div>
+                                                    <div class="text-[9px] font-medium text-indigo-500 whitespace-nowrap leading-tight" title="{{ $col['variant']->name }}">
+                                                        {{ \Illuminate\Support\Str::limit($col['variant']->name, 25) }}
+                                                    </div>
+                                                @endif
 
                                             </div>
                                         </div>
                                     </th>
                                 @empty
-                                    <!-- Тоже поменяли высоту на h-28 -->
-                                    <th class="px-3 py-3 text-center text-gray-400 font-normal align-middle h-28">За период наград нет</th>
+                                    <!-- Тоже убрали h-48 здесь -->
+                                    <th class="px-3 py-3 text-center text-gray-400 font-normal align-middle">За период наград нет</th>
                                 @endforelse
                             </tr>
                         </thead>
@@ -144,16 +156,15 @@
                                         </button>
                                     </td>
 
-                                    <!-- ЯЧЕЙКИ МАТРИЦЫ (Кликабельные) -->
+                                    <!-- ЯЧЕЙКИ МАТРИЦЫ -->
                                     @foreach($uniqueColumns as $col)
-                                        @php $colKey = $col['date'] . '|' . ($col['reason'] ?? ''); @endphp
+                                        @php $colKey = $col['date'] . '|' . ($col['reason'] ?? '') . '|' . ($col['work_variant_id'] ?? ''); @endphp
                                         <td class="px-1 py-1 border-r text-center align-top cursor-pointer hover:bg-blue-100 transition-colors min-w-[50px]"
-                                            @click="openAwardModal({{ $student->id }}, '{{ addslashes($student->last_name . ' ' . $student->first_name) }}', '{{ $col['date'] }}', '{{ addslashes($col['reason']) }}')">
+                                            @click="openAwardModal({{ $student->id }}, '{{ addslashes($student->last_name . ' ' . $student->first_name) }}', '{{ $col['date'] }}', '{{ addslashes($col['reason']) }}', '{{ $col['work_variant_id'] ?? '' }}')">
                                             
                                             <div class="flex flex-col gap-1 items-center justify-center min-h-[40px]">
                                                 @if(isset($rewardsMatrix[$student->id][$colKey]))
                                                     @foreach($rewardsMatrix[$student->id][$colKey] as $sr)
-                                                        <!-- Важно: @click.stop предотвращает всплытие клика (модалка не откроется) -->
                                                         <div x-data="{ 
                                                                 accounted: {{ $sr->is_accounted ? 'true' : 'false' }}, 
                                                                 loading: false, deleted: false,
@@ -241,20 +252,11 @@
                             @foreach($teacherReasons as $reason) <option value="{{ $reason }}"> @endforeach
                         </datalist>
                     </div>
-                    
-                    <div>
-                        <label class="block font-bold text-sm text-gray-700 mb-1">За что выдается (Основание)</label>
-                        <input type="text" name="reason" x-model="currentReason" list="reasons-list" maxlength="150" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm" placeholder="Например: За устный ответ">
-                        <datalist id="reasons-list">
-                            @foreach($teacherReasons as $reason) <option value="{{ $reason }}"> @endforeach
-                        </datalist>
-                    </div>
 
-                    <!-- НОВЫЙ БЛОК: ПРИВЯЗКА ВАРИАНТА -->
                     @if(isset($groupVariants) && $groupVariants->count() > 0)
                         <div>
                             <label class="block font-bold text-sm text-gray-700 mb-1">Привязать к выданной работе <span class="text-gray-400 font-normal">(необязательно)</span></label>
-                            <select name="work_variant_id" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm bg-gray-50">
+                            <select name="work_variant_id" x-model="currentVariantId" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm bg-gray-50">
                                 <option value="">-- Без привязки --</option>
                                 @foreach($groupVariants as $history)
                                     <option value="{{ $history->variant->id }}">
@@ -265,11 +267,9 @@
                         </div>
                     @endif
                     
-                    
                     <div>
                         <label class="block font-bold text-sm text-gray-700 mb-2">Выберите награду <span x-show="!currentReward" class="text-red-500 text-xs font-normal ml-2">(необходимо выбрать)</span></label>
-
-                        <!-- ГАЛЕРЕЯ НАГРАД ВМЕСТО ВЫПАДАЮЩЕГО СПИСКА -->
+                        
                         <div class="flex flex-wrap justify-center p-3 gap-3 bg-gray-50 border rounded-lg shadow-inner border-gray-200">
                             @foreach($availableRewards as $r)
                                 <button 
@@ -306,23 +306,37 @@
         <div x-show="editReasonModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div @click.away="editReasonModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
                 <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
-                    <h3 class="font-bold text-lg text-gray-800">Изменить основание в колонке</h3>
+                    <h3 class="font-bold text-lg text-gray-800">Изменить данные колонки</h3>
                     <button @click="editReasonModalOpen = false" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
                 </div>
                 <form action="{{ route('rewards.bulkReason') }}" method="POST" class="p-6 space-y-4">
                     @csrf
                     @method('PATCH')
-                    <!-- Скрытые поля -->
                     <input type="hidden" name="group_id" value="{{ $groupId }}">
                     <input type="hidden" name="date" x-model="editDate">
                     <input type="hidden" name="old_reason" x-model="editOldReason">
+                    <input type="hidden" name="old_work_variant_id" x-model="editOldVariantId">
                     
-                    <p class="text-sm text-gray-600">Это переименует основание у <strong class="text-gray-900">всех</strong> наград в этой колонке за <span x-text="editDate.split('-').reverse().join('.')"></span>.</p>
+                    <p class="text-sm text-gray-600">Это изменит данные у <strong class="text-gray-900">всех</strong> наград в этой колонке за <span x-text="editDate.split('-').reverse().join('.')"></span>.</p>
                     
                     <div>
-                        <label class="block font-bold text-sm text-gray-700 mb-1">Новое основание</label>
+                        <label class="block font-bold text-sm text-gray-700 mb-1">Основание</label>
                         <input type="text" name="new_reason" x-model="editNewReason" list="reasons-list" maxlength="150" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm" placeholder="Введите новую причину">
                     </div>
+
+                    @if(isset($groupVariants) && $groupVariants->count() > 0)
+                        <div>
+                            <label class="block font-bold text-sm text-gray-700 mb-1 mt-3">Привязать работу</label>
+                            <select name="new_work_variant_id" x-model="editNewVariantId" class="w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 text-sm bg-gray-50">
+                                <option value="">-- Без привязки --</option>
+                                @foreach($groupVariants as $history)
+                                    <option value="{{ $history->variant->id }}">
+                                        {{ $history->assigned_at->format('d.m.y') }} | {{ $history->variant->work->title ?? 'Без названия' }} ({{ $history->variant->name }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     
                     <div class="flex justify-end gap-3 pt-4 border-t mt-6">
                         <button type="button" @click="editReasonModalOpen = false" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Отмена</button>
