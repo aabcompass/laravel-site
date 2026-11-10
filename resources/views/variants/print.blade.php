@@ -43,18 +43,26 @@
             margin-top: 10px;
             margin-bottom: 20px;
             width: 100%;
-            /* Минимальная высота задается из настроек, но блок растянется, если картинка длиннее */
-            background-image: 
-                linear-gradient(to right, #9ca3af 1px, transparent 1px),
-                linear-gradient(to bottom, #9ca3af 1px, transparent 1px);
+            
+            /* НАДЕЖНАЯ КЛЕТКА ЧЕРЕЗ SVG (Принтеры печатают ее идеально) */
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 10 0 L 0 0 0 10' fill='none' stroke='%239ca3af' stroke-width='0.5'/%3E%3C/svg%3E");
             background-size: 5mm 5mm;
             
-            /* РАМКА УДАЛЕНА */
-            
-            /* Принудительная печать фона в современных браузерах */
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
+        }
+
+        /* Контейнер для случая, когда клетки выключены (значение 0), но есть картинка */
+        .no-grid-container {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        /* Clearfix, чтобы контейнер растягивался под высоту плавающих картинок */
+        .solution-grid::after, .no-grid-container::after {
+            content: ""; display: table; clear: both;
         }
         
         /* Clearfix, чтобы контейнер клетки растягивался под высоту плавающих картинок */
@@ -146,12 +154,16 @@
                         </div>
                         <div style="margin-bottom: {{ $variant->print_spacing_lines * 5 }}mm;"></div>
                     @else
-                        <!-- ВЕРСИЯ УЧЕНИКА: Блок с клеткой обтекает картинки -->
-                        @if($variant->print_spacing_lines > 0 || $task->taskImages->count() > 0)
-                            <!-- min-height задается из настроек, но блок растянется под картинку, если надо -->
-                            <div class="solution-grid" style="min-height: {{ $variant->print_spacing_lines * 5 }}mm;">
+                        <!-- ВЕРСИЯ УЧЕНИКА -->
+                        @php
+                            $hasGrid = $variant->print_spacing_lines > 0;
+                            $hasImages = $task->taskImages->count() > 0;
+                        @endphp
+
+                        @if($hasGrid || $hasImages)
+                            <!-- Динамически решаем: ставить фон-клетку (solution-grid) или просто контейнер без фона (no-grid-container) -->
+                            <div class="{{ $hasGrid ? 'solution-grid' : 'no-grid-container' }}" style="{{ $hasGrid ? 'min-height: ' . ($variant->print_spacing_lines * 5) . 'mm;' : '' }}">
                                 @foreach($task->taskImages as $img)
-                                    <!-- Обертка картинки, которая "расталкивает" клетку -->
                                     <div class="floated-img" style="width: {{ $img->scale }}%;">
                                         <img src="{{ asset($img->file_path) }}">
                                     </div>
