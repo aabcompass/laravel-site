@@ -46,7 +46,7 @@
                                 <x-dropdown-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
                                     Vascak (VPN req.)
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="url('https://javalab.org/en/')" target="_blank">
+                                <x-dropdown-link :href="url('/en')" target="_blank">
                                     Javalab
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
@@ -166,7 +166,7 @@
             <x-responsive-nav-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
                 Vascak (VPN req.) ↗
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="url('https://javalab.org/en/')" target="_blank">
+            <x-responsive-nav-link :href="url('/en')" target="_blank">
                 Javalab ↗
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="url('https://icphysweb.z13.web.core.windows.net/simulation.html')" target="_blank">
