@@ -1,4 +1,5 @@
 User-agent: *
+Discallow /vascak/
 Disallow: /javalab/
 Disallow: /en/
 Disallow: /lee/
