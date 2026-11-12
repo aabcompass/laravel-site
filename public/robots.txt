@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /javalab/
+Disallow: /en/
+Disallow: /lee/
+Disallow: /wp-content/
+Disallow: /wp-includes/
+Disallow: /_cdn/

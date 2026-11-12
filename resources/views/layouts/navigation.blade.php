@@ -43,7 +43,7 @@
                                 <x-dropdown-link :href="url('https://www.physicsclassroom.com/interactive')" target="_blank">
                                     Physics Classroom
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
+                                <x-dropdown-link :href="url('/vascak')" target="_blank">
                                     Vascak (VPN req.)
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="url('/en')" target="_blank">
@@ -163,8 +163,8 @@
             <x-responsive-nav-link :href="url('https://www.physicsclassroom.com/interactive')" target="_blank">
                 Physics Classroom ↗
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="url('https://www.vascak.cz/physicsanimations.php')" target="_blank">
-                Vascak (VPN req.) ↗
+            <x-responsive-nav-link :href="url('/vascak')" target="_blank">
+                Vascak ↗
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="url('/en')" target="_blank">
                 Javalab ↗
