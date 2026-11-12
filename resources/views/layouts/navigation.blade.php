@@ -44,7 +44,7 @@
                                     Physics Classroom
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="url('/vascak')" target="_blank">
-                                    Vascak (VPN req.)
+                                    Vascak
                                 </x-dropdown-link>
                                 <x-dropdown-link :href="url('/en')" target="_blank">
                                     Javalab
